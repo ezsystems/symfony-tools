@@ -23,7 +23,7 @@ Bundle follows [SemVer](https://semver.org/) with one exception:
 
 ### Features
 
-*Only listing of features*
+*Only listing of features (further info in `doc/<feature>.md`):*
 
 **Polyfill (Backports) features:**
 - 
