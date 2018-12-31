@@ -10,8 +10,8 @@ to simplify forward and backport ports to and from Symfony itself.
 
 ### Requriments
 
-- Symfony 3 _(4 planned spring 2019)_
-- PHP 5.6+ v1 for Symfony 3, PHP 7.1+ in v2 for Symfony 4
+- Symfony 3.4 _(4.3+ planned spring 2019, 2.8 support might happen if we need it)_
+- PHP 5.6+ v1 for Symfony 3/2, PHP 7.1+ in v2 for Symfony 4
 
 #### Semantic Versioning exception
 
