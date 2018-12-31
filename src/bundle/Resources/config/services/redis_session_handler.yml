@@ -1,0 +1,13 @@
+services:
+    redis_session_handler_connection:
+        class: '%env(REDIS_CLASS)%'
+        calls:
+            - method: connect
+              arguments:
+                  - '%env(REDIS_SESSION_HANDLER_HOST)%'
+                  - '%env(REDIS_SESSION_HANDLER_PORT)%'
+
+    redis_session_handler:
+        class: EzSystems\SymfonyTools\Symfony\Components\HttpFoundation\Session\Storage\Handler\RedisSessionHandler
+        arguments:
+            - '@redis_session_handler_connection'
