@@ -1,0 +1,34 @@
+{
+  "name": "ezsystems/symfony-tools",
+  "license": "MIT",
+  "type": "ezplatform-bundle",
+  "description": "eZ Systems Symfony Tools",
+  "authors": [
+    {
+      "name": "eZ Systems",
+      "email": "dev-team@ez.no"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "EzSystems\\SymfonyToolsBundle\\": "src/bundle/",
+      "EzSystems\\SymfonyTools\\": "src/lib/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "EzSystems\\SymfonyTools\\Tests\\": "src/lib/Tests"
+    }
+  },
+  "require": {
+    "php": ">=5.6",
+    "symfony/symfony": "^2.8.47|^3.4.17"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^7.3",
+    "friendsofphp/php-cs-fixer": "^2.7"
+  },
+  "scripts": {
+    "fix-cs": "@php ./vendor/bin/php-cs-fixer fix -v --show-progress=estimating"
+  }
+}
