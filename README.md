@@ -40,7 +40,7 @@ Make sure as much as possible the feature is forward compitable for users, so wh
 When contributing Symfony backports to this bundle, be aware you commit to help maintain that feature in case there are bug fixes or improvments to that feature in Symfony itself.
 
 **Incubator**
-Incubator features should only be proposed here if you intend to contribute this to Symfony itself, and there is at least some certainty it will be accepted _(with or withoputh adjustments, see `Semantic Versioning exception`)_. And you also commit to adapt the feature here if changes are requested once proposed to Symfony.
+Incubator features should only be proposed here if you intend to contribute this to Symfony itself, and there is at least some certainty it will be accepted. And you also commit to adapt the feature here, if changes are requested once proposed to Symfony.
 
 As such it's only applicable for smaller features _(e.g. new cache adapater)_, not a complete new component for instance. 
 
