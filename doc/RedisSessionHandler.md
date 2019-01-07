@@ -4,9 +4,8 @@ This feature has been backported from Symfony 4. The `RedisSessionHandler` allow
 Last revision: https://github.com/symfony/symfony/commit/239a022cc01cca52c3f6ddde3231199369cf34c2
 
 ## Requirements
-PHP >= 5.6
-Symfony 3.x
-Redis extension (or alternatively one of the following: RedisArray / RedisCluster / Predis\Client / RedisProxy / RedisClusterProxy)
+- Symfony 3.x _(implies support for PHP >= 5.6, the feature is native as of Symfony 4)_
+- Redis extension or Predis _(using one of the following: RedisArray / RedisCluster / Predis\Client / RedisProxy / RedisClusterProxy)_
 
 ## Configuration
 After installing the bundle, you have to configure proper services on your own to be able to use RedisSessionHandler.
