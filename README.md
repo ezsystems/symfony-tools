@@ -11,7 +11,7 @@ to simplify forward and backport ports to and from Symfony itself.
 ### Requriments
 
 - Symfony 3.4 _(4.3+ planned spring 2019, 2.8 support might happen if we need it)_
-- PHP 5.6+ v1 for Symfony 3/2, PHP 7.1+ in v2 for Symfony 4
+- PHP 7.1+ 3.x branch for Symfony3 _(PHP 5.6+ for 2.x for Symfony2 if we ever add that)_
 
 #### Semantic Versioning exception
 
@@ -23,10 +23,8 @@ Bundle follows [SemVer](https://semver.org/) with one exception:
 
 ### Features
 
-*Only listing of features (further info in `doc/<feature>.md`):*
-
-**Polyfill (Backports) features:**
-- 
+**Polyfill (backport) features:**
+- [Redis session handler](doc/RedisSessionHandler.md) _(for Symfony3, native in Symfony4)_
 
 **Incubator features**
 - 
@@ -34,15 +32,15 @@ Bundle follows [SemVer](https://semver.org/) with one exception:
 
 ### Contributing
 
-Make sure as much as possible the feature is forward compatible for users, so when they upgrade to Symfony version where it's included, they not need to adapt their code/config. _(see `Semantic Versioning exception` for how this works for incubators)_
+Make sure as much as possible the feature is forward compatible for users, so when they upgrade to Symfony version where it's included, they should ideally not need to adapt their code/config. _(see `Semantic Versioning exception` for how this works for incubators)_
 
 **Polyfill (Backports)**
 When contributing Symfony backports to this bundle, be aware you commit to help maintain that feature in case there are bug fixes or improvements to that feature in Symfony itself.
 
 **Incubator**
-Incubator features should only be proposed here if you intend to contribute this to Symfony itself, and there is at least some certainty it will be accepted. And you also commit to adapt the feature here, if changes are requested once proposed to Symfony.
+Incubator features should only be proposed here if you intend to contribute this to Symfony itself, and there is at least some certainty it will be accepted. And you also commit to adapt the feature here, if changes are requested once proposed to Symfony. Essentially aiming for the feature here becoming a polyfill/backport feature in the end.
 
-As such it's only applicable for smaller features _(e.g. new cache adapter)_, not a complete new component for instance. 
+As such it's only applicable for smaller features _(e.g. new cache adapter(s))_, not a complete new component or larger changes across Symfony itself for instance. 
 
 ### License
 
