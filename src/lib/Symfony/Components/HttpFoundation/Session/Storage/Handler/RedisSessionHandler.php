@@ -25,6 +25,12 @@ use Symfony\Component\Cache\Traits\RedisClusterProxy;
 use Symfony\Component\Cache\Traits\RedisProxy;
 use Symfony\Component\HttpFoundation\Session\Storage\Handler\AbstractSessionHandler;
 
+/**
+ * Redis based session storage handler based on the Redis class
+ * provided by the PHP redis extension.
+ *
+ * @author Dalibor Karlović <dalibor@flexolabs.io>
+ */
 class RedisSessionHandler extends AbstractSessionHandler
 {
     private $redis;
@@ -61,13 +67,13 @@ class RedisSessionHandler extends AbstractSessionHandler
         }
 
         $this->redis = $redis;
-        $this->prefix = $options['prefix'] ? 'sf_s' : null;
+        $this->prefix = $options['prefix'] ?? 'sf_s';
     }
 
     /**
      * {@inheritdoc}
      */
-    protected function doRead($sessionId)
+    protected function doRead($sessionId): string
     {
         return $this->redis->get($this->prefix.$sessionId) ?: '';
     }
@@ -75,7 +81,7 @@ class RedisSessionHandler extends AbstractSessionHandler
     /**
      * {@inheritdoc}
      */
-    protected function doWrite($sessionId, $data)
+    protected function doWrite($sessionId, $data): bool
     {
         $result = $this->redis->setEx($this->prefix.$sessionId, (int) ini_get('session.gc_maxlifetime'), $data);
 
@@ -85,7 +91,7 @@ class RedisSessionHandler extends AbstractSessionHandler
     /**
      * {@inheritdoc}
      */
-    protected function doDestroy($sessionId)
+    protected function doDestroy($sessionId): bool
     {
         $this->redis->del($this->prefix.$sessionId);
 
@@ -95,7 +101,7 @@ class RedisSessionHandler extends AbstractSessionHandler
     /**
      * {@inheritdoc}
      */
-    public function close()
+    public function close(): bool
     {
         return true;
     }
@@ -103,7 +109,7 @@ class RedisSessionHandler extends AbstractSessionHandler
     /**
      * {@inheritdoc}
      */
-    public function gc($maxlifetime)
+    public function gc($maxlifetime): bool
     {
         return true;
     }
