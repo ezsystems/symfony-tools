@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @copyright Copyright (C) eZ Systems AS. All rights reserved.
- * @license For full copyright and license information view LICENSE file distributed with this source code.
- */
-
 /*
  * This file is part of the Symfony package.
  *
@@ -15,15 +10,14 @@
  *
  * Original source:
  * https://github.com/symfony/symfony/blob/master/src/Symfony/Component/HttpFoundation/Session/Storage/Handler/RedisSessionHandler.php
- * Last revision: https://github.com/symfony/symfony/commit/239a022cc01cca52c3f6ddde3231199369cf34c2
+ * Last revision: https://github.com/symfony/symfony/commit/239a022cc01cca52c3f6ddde3231199369cf34c2 (+ CS commit: c0323b)
  */
 
-namespace EzSystems\SymfonyTools\Symfony\Components\HttpFoundation\Session\Storage\Handler;
+namespace Symfony\Component\HttpFoundation\Session\Storage\Handler;
 
 use Predis\Response\ErrorInterface;
 use Symfony\Component\Cache\Traits\RedisClusterProxy;
 use Symfony\Component\Cache\Traits\RedisProxy;
-use Symfony\Component\HttpFoundation\Session\Storage\Handler\AbstractSessionHandler;
 
 /**
  * Redis based session storage handler based on the Redis class
@@ -49,7 +43,7 @@ class RedisSessionHandler extends AbstractSessionHandler
      *
      * @throws \InvalidArgumentException When unsupported client or options are passed
      */
-    public function __construct($redis, array $options = array())
+    public function __construct($redis, array $options = [])
     {
         if (
             !$redis instanceof \Redis &&
@@ -62,7 +56,7 @@ class RedisSessionHandler extends AbstractSessionHandler
             throw new \InvalidArgumentException(sprintf('%s() expects parameter 1 to be Redis, RedisArray, RedisCluster or Predis\Client, %s given', __METHOD__, \is_object($redis) ? \get_class($redis) : \gettype($redis)));
         }
 
-        if ($diff = array_diff(array_keys($options), array('prefix'))) {
+        if ($diff = array_diff(array_keys($options), ['prefix'])) {
             throw new \InvalidArgumentException(sprintf('The following options are not supported "%s"', implode(', ', $diff)));
         }
 

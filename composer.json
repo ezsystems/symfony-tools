@@ -10,6 +10,7 @@
     }
   ],
   "autoload": {
+    "classmap": ["src/lib/Symfony"],
     "psr-4": {
       "EzSystems\\SymfonyToolsBundle\\": "src/bundle/",
       "EzSystems\\SymfonyTools\\": "src/lib/"
