@@ -13,7 +13,7 @@ After installing the bundle, you have to configure proper services on your own t
 At first, you have to define service for Redis connection. It can be done in `app/config/services.yml`. Configuration should look like the following:
 ```yaml
     redis_session_handler_connection:
-        class: 'Redis' # Or one of: RedisArray, RedisCluster, Predis\Client, or  RedisProxy.
+        class: 'Redis' # Or one of: RedisArray, RedisCluster, Predis\Client, or RedisProxy.
         calls:
             - method: connect
               arguments:
