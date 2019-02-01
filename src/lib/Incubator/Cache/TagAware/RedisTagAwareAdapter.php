@@ -1,11 +1,10 @@
 <?php
 
 /**
- * File containing the ContentHandler implementation.
- *
  * @copyright Copyright (C) eZ Systems AS. All rights reserved.
  * @license For full copyright and license information view LICENSE file distributed with this source code.
  */
+
 declare(strict_types=1);
 
 namespace EzSystems\SymfonyTools\Incubator\Cache\TagAware;
@@ -32,7 +31,6 @@ use Symfony\Component\Cache\Traits\RedisTrait;
  *   - Use Redis Sets for Tags, appending related keys on the tags, with no expiry on the Set
  *   - Fetches and resets Set on invalidation by tag, in a pipeline operation.
  *   - Uses Redis "Set" datatype limited to 4 billion ids per tag, but effectively limited to 2 billion in adapter code.
- *
  */
 final class RedisTagAwareAdapter extends AbstractTagAwareAdapter implements TagAwareAdapterInterface
 {
@@ -49,7 +47,6 @@ final class RedisTagAwareAdapter extends AbstractTagAwareAdapter implements TagA
      */
     private const FORCED_ITEM_TTL = 864000;
 
-
     /**
      * @param \Redis|\RedisArray|\RedisCluster|\Predis\Client $redisClient     The redis client
      * @param string                                          $namespace       The default namespace
@@ -61,12 +58,12 @@ final class RedisTagAwareAdapter extends AbstractTagAwareAdapter implements TagA
 
         // Make sure php-redis is 3.1.3 or higher configured for Redis classes
         if (!$this->redis instanceof Predis\Client && version_compare(phpversion('redis'), '3.1.3', '<')) {
-            throw new \Exception("RedisTagAwareAdapter requries php-redis 3.1.3 or higher, alternativly use predis/predis");
+            throw new \Exception('RedisTagAwareAdapter requries php-redis 3.1.3 or higher, alternativly use predis/predis');
         }
     }
 
     /**
-     * This method overrides @see \Symfony\Component\Cache\Traits\RedisTrait::doSave
+     * This method overrides @see \Symfony\Component\Cache\Traits\RedisTrait::doSave.
      *
      * It needs to be overridden due to:
      * - usage of native `serialize` method in the original method.
@@ -87,7 +84,7 @@ final class RedisTagAwareAdapter extends AbstractTagAwareAdapter implements TagA
         $tagSets = [];
         foreach ($values as $id => $value) {
             foreach ($value['tags'] as $tag) {
-                $tagSets[$getId(self::TAGS_PREFIX.$tag)][] = $id;
+                $tagSets[$getId(self::TAGS_PREFIX . $tag)][] = $id;
             }
         }
 
@@ -99,7 +96,7 @@ final class RedisTagAwareAdapter extends AbstractTagAwareAdapter implements TagA
                 yield 'setEx' => [
                     $id,
                     0 >= $lifetime ? self::FORCED_ITEM_TTL : $lifetime,
-                    $value
+                    $value,
                 ];
             }
 
@@ -160,7 +157,7 @@ final class RedisTagAwareAdapter extends AbstractTagAwareAdapter implements TagA
         // Requires Predis or PHP Redis 3.1.3+ (https://github.com/phpredis/phpredis/commit/d2e203a6)
         $tagIds = $this->pipeline(function () use ($tags, $getId) {
             foreach (array_unique($tags) as $tag) {
-                yield 'sPop' => [$getId(self::TAGS_PREFIX.$tag), self::MAX_SET_SIZE];
+                yield 'sPop' => [$getId(self::TAGS_PREFIX . $tag), self::MAX_SET_SIZE];
             }
         });
 

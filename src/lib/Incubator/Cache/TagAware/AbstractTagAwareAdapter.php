@@ -1,12 +1,8 @@
 <?php
 
-/*
- * This file is part of the Symfony package.
- *
- * (c) Fabien Potencier <fabien@symfony.com>
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
+/**
+ * @copyright Copyright (C) eZ Systems AS. All rights reserved.
+ * @license For full copyright and license information view LICENSE file distributed with this source code.
  */
 
 namespace EzSystems\SymfonyTools\Incubator\Cache\TagAware;
@@ -37,12 +33,13 @@ abstract class AbstractTagAwareAdapter implements AdapterInterface, LoggerAwareI
     private $mergeByLifetime;
     /**
      * @var \Symfony\Component\Cache\Marshaller\MarshallerInterface
-     * NOTE: Not relevant in this way in Symfony 4+ where Abstract trait already uses this.
+     * NOTE: Not relevant in this way in Symfony 4+ where Abstract trait already uses this
      */
     protected $marshaller;
 
     /**
      * @var callable
+     *
      * @todo Find a way to avoid this, a way that also works for FilesystemTagAwareAdapter.
      *       It's currently like this in order to expose getId() from AbstractTrait to RedisTagAwareAdapter.
      */
@@ -59,7 +56,7 @@ abstract class AbstractTagAwareAdapter implements AdapterInterface, LoggerAwareI
     {
         $this->marshaller = $marshaller ?? new DefaultMarshaller();
 
-        $this->namespace = '' === $namespace ? '' : CacheItem::validateKey($namespace).':';
+        $this->namespace = '' === $namespace ? '' : CacheItem::validateKey($namespace) . ':';
         if (null !== $this->maxIdLength && \strlen($namespace) > $this->maxIdLength - 24) {
             throw new InvalidArgumentException(sprintf('Namespace must be %d chars max, %d given ("%s")', $this->maxIdLength - 24, \strlen($namespace), $namespace));
         }
@@ -82,9 +79,9 @@ abstract class AbstractTagAwareAdapter implements AdapterInterface, LoggerAwareI
         $getId = function ($key) { return $this->getId((string) $key); };
         $this->mergeByLifetime = \Closure::bind(
             function ($deferred, $namespace, &$expiredIds) use ($getId) {
-                $byLifetime = array();
+                $byLifetime = [];
                 $now = time();
-                $expiredIds = array();
+                $expiredIds = [];
 
                 foreach ($deferred as $key => $item) {
                     //<diff:AbstractAdapter> store Value and Tags on the cache value
@@ -125,11 +122,11 @@ abstract class AbstractTagAwareAdapter implements AdapterInterface, LoggerAwareI
         $value = null;
 
         try {
-            foreach ($this->doFetch(array($id)) as $value) {
+            foreach ($this->doFetch([$id]) as $value) {
                 $isHit = true;
             }
         } catch (\Exception $e) {
-            CacheItem::log($this->logger, 'Failed to fetch key "{key}"', array('key' => $key, 'exception' => $e));
+            CacheItem::log($this->logger, 'Failed to fetch key "{key}"', ['key' => $key, 'exception' => $e]);
         }
 
         return $f($key, $value, $isHit);
@@ -138,12 +135,12 @@ abstract class AbstractTagAwareAdapter implements AdapterInterface, LoggerAwareI
     /**
      * {@inheritdoc}
      */
-    public function getItems(array $keys = array())
+    public function getItems(array $keys = [])
     {
         if ($this->deferred) {
             $this->commit();
         }
-        $ids = array();
+        $ids = [];
 
         foreach ($keys as $key) {
             $ids[] = $this->getId($key);
@@ -151,8 +148,8 @@ abstract class AbstractTagAwareAdapter implements AdapterInterface, LoggerAwareI
         try {
             $items = $this->doFetch($ids);
         } catch (\Exception $e) {
-            CacheItem::log($this->logger, 'Failed to fetch requested items', array('keys' => $keys, 'exception' => $e));
-            $items = array();
+            CacheItem::log($this->logger, 'Failed to fetch requested items', ['keys' => $keys, 'exception' => $e]);
+            $items = [];
         }
         $ids = array_combine($ids, $keys);
 
@@ -193,7 +190,7 @@ abstract class AbstractTagAwareAdapter implements AdapterInterface, LoggerAwareI
         $ok = true;
         $byLifetime = $this->mergeByLifetime;
         $byLifetime = $byLifetime($this->deferred, $this->namespace, $expiredIds);
-        $retry = $this->deferred = array();
+        $retry = $this->deferred = [];
 
         if ($expiredIds) {
             $this->doDelete($expiredIds);
@@ -203,7 +200,7 @@ abstract class AbstractTagAwareAdapter implements AdapterInterface, LoggerAwareI
                 $e = $this->doSave($values, $lifetime);
             } catch (\Exception $e) {
             }
-            if (true === $e || array() === $e) {
+            if (true === $e || [] === $e) {
                 continue;
             }
             if (\is_array($e) || 1 === \count($values)) {
@@ -211,7 +208,7 @@ abstract class AbstractTagAwareAdapter implements AdapterInterface, LoggerAwareI
                     $ok = false;
                     $v = $values[$id];
                     $type = \is_object($v) ? \get_class($v) : \gettype($v);
-                    CacheItem::log($this->logger, 'Failed to save key "{key}" ({type})', array('key' => substr($id, \strlen($this->namespace)), 'type' => $type, 'exception' => $e instanceof \Exception ? $e : null));
+                    CacheItem::log($this->logger, 'Failed to save key "{key}" ({type})', ['key' => substr($id, \strlen($this->namespace)), 'type' => $type, 'exception' => $e instanceof \Exception ? $e : null]);
                 }
             } else {
                 foreach ($values as $id => $v) {
@@ -225,15 +222,15 @@ abstract class AbstractTagAwareAdapter implements AdapterInterface, LoggerAwareI
             foreach ($ids as $id) {
                 try {
                     $v = $byLifetime[$lifetime][$id];
-                    $e = $this->doSave(array($id => $v), $lifetime);
+                    $e = $this->doSave([$id => $v], $lifetime);
                 } catch (\Exception $e) {
                 }
-                if (true === $e || array() === $e) {
+                if (true === $e || [] === $e) {
                     continue;
                 }
                 $ok = false;
                 $type = \is_object($v) ? \get_class($v) : \gettype($v);
-                CacheItem::log($this->logger, 'Failed to save key "{key}" ({type})', array('key' => substr($id, \strlen($this->namespace)), 'type' => $type, 'exception' => $e instanceof \Exception ? $e : null));
+                CacheItem::log($this->logger, 'Failed to save key "{key}" ({type})', ['key' => substr($id, \strlen($this->namespace)), 'type' => $type, 'exception' => $e instanceof \Exception ? $e : null]);
             }
         }
 
@@ -261,7 +258,7 @@ abstract class AbstractTagAwareAdapter implements AdapterInterface, LoggerAwareI
                 yield $key => $f($key, $value, true);
             }
         } catch (\Exception $e) {
-            CacheItem::log($this->logger, 'Failed to fetch requested items', array('keys' => array_values($keys), 'exception' => $e));
+            CacheItem::log($this->logger, 'Failed to fetch requested items', ['keys' => array_values($keys), 'exception' => $e]);
         }
 
         foreach ($keys as $key) {
@@ -272,7 +269,7 @@ abstract class AbstractTagAwareAdapter implements AdapterInterface, LoggerAwareI
     /**
      * Overload unserialize() in order to deprecate and throw on use.
      *
-     * @deprecated Use $this->marshaller instead.
+     * @deprecated use $this->marshaller instead
      */
     protected static function unserialize($value)
     {

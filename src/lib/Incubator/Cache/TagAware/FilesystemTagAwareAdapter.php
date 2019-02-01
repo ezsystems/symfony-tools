@@ -1,11 +1,10 @@
 <?php
 
 /**
- * File containing the ContentHandler implementation.
- *
  * @copyright Copyright (C) eZ Systems AS. All rights reserved.
  * @license For full copyright and license information view LICENSE file distributed with this source code.
  */
+
 declare(strict_types=1);
 
 namespace EzSystems\SymfonyTools\Incubator\Cache\TagAware;
@@ -63,7 +62,7 @@ final class FilesystemTagAwareAdapter extends AbstractTagAwareAdapter implements
         $tagSet = [];
         foreach ($serialized as $id => $value) {
             $file = $this->getFile($id, true);
-            if (!$this->write($file, $expiresAt."\n".rawurlencode($id)."\n".$value, $expiresAt)) {
+            if (!$this->write($file, $expiresAt . "\n" . rawurlencode($id) . "\n" . $value, $expiresAt)) {
                 $failed[] = $id;
                 continue;
             }
@@ -79,10 +78,10 @@ final class FilesystemTagAwareAdapter extends AbstractTagAwareAdapter implements
 
         // Save Tags as symlinks, uses Filesystem Component to let it handle exceptions correctly
         $fs = $this->getFilesystem();
-        foreach($tagSet as $tag => $itemsData) {
+        foreach ($tagSet as $tag => $itemsData) {
             $tagFolder = $this->getTagFolder($tag);
             foreach ($itemsData as $data) {
-                $fs->symlink($data['file'], $tagFolder.$this->getTagKeyFile($data['id']));
+                $fs->symlink($data['file'], $tagFolder . $this->getTagKeyFile($data['id']));
             }
         }
 
@@ -103,7 +102,7 @@ final class FilesystemTagAwareAdapter extends AbstractTagAwareAdapter implements
 
         foreach ($ids as $id) {
             $file = $this->getFile($id);
-            if (!file_exists($file) || !$h = @fopen($file, 'rb')) {
+            if (!file_exists($file) || !$h = @fopen($file, 'r')) {
                 continue;
             }
             if (($expiresAt = (int) fgets($h)) && $now >= $expiresAt) {
@@ -141,7 +140,7 @@ final class FilesystemTagAwareAdapter extends AbstractTagAwareAdapter implements
 
             foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($this->getTagFolder($tag), \FilesystemIterator::SKIP_DOTS)) as $itemLink) {
                 if (!$itemLink->isLink()) {
-                    throw new \Exception("Tag link is not a link: " . $itemLink);
+                    throw new \Exception('Tag link is not a link: ' . $itemLink);
                 }
 
                 $valueFile = $itemLink->getRealPath();
@@ -156,25 +155,25 @@ final class FilesystemTagAwareAdapter extends AbstractTagAwareAdapter implements
         return true;
     }
 
-    private function getFilesystem() : Filesystem
+    private function getFilesystem(): Filesystem
     {
         return $this->fs ?? $this->fs = new Filesystem();
     }
 
-    private function getTagFolder($tag) : string
+    private function getTagFolder($tag): string
     {
-        return $this->directory . self::TAG_FOLDER . \DIRECTORY_SEPARATOR . str_replace('/', '-', $tag). \DIRECTORY_SEPARATOR;
+        return $this->directory . self::TAG_FOLDER . \DIRECTORY_SEPARATOR . str_replace('/', '-', $tag) . \DIRECTORY_SEPARATOR;
     }
 
-    private function getTagKeyFile($key) : string
+    private function getTagKeyFile($key): string
     {
-        $hash = str_replace('/', '-', base64_encode(hash('sha256', static::class.$key, true)));
+        $hash = str_replace('/', '-', base64_encode(hash('sha256', static::class . $key, true)));
 
         return substr($hash, 0, 20);
     }
 
     /**
-     * @internal For unit tests only.
+     * @internal for unit tests only
      */
     public function setFilesystem(Filesystem $fs)
     {
