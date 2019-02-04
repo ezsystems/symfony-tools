@@ -37,9 +37,9 @@ final class RedisTagAwareAdapter extends AbstractTagAwareAdapter implements TagA
     use RedisTrait;
 
     /**
-     * Constants used for tag Sets.
+     * Limit for how many items are popped from tags per iteration to not run out of memory pipelining deletes.
      */
-    private const MAX_SET_SIZE = 2147483647;
+    private const BULK_INVALIDATION_POP_LIMIT = 10000;
 
     /**
      * On cache items without a lifetime set, we force it to 10 days.
@@ -153,23 +153,19 @@ final class RedisTagAwareAdapter extends AbstractTagAwareAdapter implements TagA
             return;
         }
 
+        // Retrive and delete items in bulk of 10.000 at a time to not overflow buffers
         $getId = $this->getId;
-        // Requires Predis or PHP Redis 3.1.3+ (https://github.com/phpredis/phpredis/commit/d2e203a6)
-        $tagIds = $this->pipeline(function () use ($tags, $getId) {
-            foreach (array_unique($tags) as $tag) {
-                yield 'sPop' => [$getId(self::TAGS_PREFIX . $tag), self::MAX_SET_SIZE];
-            }
-        });
+        do {
+            $tagIdSets = $this->pipeline(function () use ($tags, $getId, $limit) {
+                foreach (array_unique($tags) as $tag) {
+                    // Requires Predis or PHP Redis 3.1.3+ (https://github.com/phpredis/phpredis/commit/d2e203a6)
+                    yield 'sPop' => [$getId(self::TAGS_PREFIX . $tag), self::BULK_INVALIDATION_POP_LIMIT];
+                }
+            });
 
-        // flatten array, keys should already be prefixed as id's here
-        $allIds = [];
-        foreach ($tagIds as $ids) {
-            $allIds += $ids;// array union as we don't care about key
-        }
-
-        // NOTE: If we didn't support Redis Cluster we could have done all in one pipeline, but besides negligible risk
-        // of clearing in between generated cache items, only real downside here is extra rountrip.
-        $this->doDelete(array_unique($allIds));
+            $ids = array_unique(array_merge(...$tagIdSets))
+            $this->doDelete($ids);
+        } while (count($ids) >= self::BULK_INVALIDATION_POP_LIMIT);
 
         return true;
     }
