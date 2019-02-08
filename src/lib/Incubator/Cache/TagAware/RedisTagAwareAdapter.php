@@ -163,7 +163,7 @@ final class RedisTagAwareAdapter extends AbstractTagAwareAdapter implements TagA
                 }
             });
 
-            $ids = array_unique(array_merge(...$tagIdSets))
+            $ids = array_unique(array_merge(...$tagIdSets));
             $this->doDelete($ids);
         } while (count($ids) >= self::BULK_INVALIDATION_POP_LIMIT);
 
