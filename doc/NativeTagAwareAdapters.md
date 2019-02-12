@@ -83,5 +83,10 @@ Once that is done you can enable the handler, for instance by setting the follow
 ```bash
 export CACHE_POOL="app.cache.redis"
 ```
+If you don't have redis, for testing you can use:
+- Run: `docker run --name my-redis -p 6379:6379 -d redis`.
+- Stop + Remove: `docker rm -f my-redis`.
+- Debug: `printf "PING\r\n";) | nc localhost 6379 `.
+
 
 _Then clear cache and restart web server, you'll be able to verify it's in use on Symfony's web debug toolbar._
