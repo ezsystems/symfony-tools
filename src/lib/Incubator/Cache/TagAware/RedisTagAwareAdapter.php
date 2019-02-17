@@ -18,20 +18,12 @@ use Symfony\Component\Cache\Traits\RedisTrait;
  * Class RedisTagAwareAdapter, stores tag <> id relationship as a Set so we don't need to fetch tags on get* operations.
  *
  * Requirements/Limitations:
- * - Redis configured with `noeviction` or any `volatile-*` eviction policy
- *   - This is to guarantee that tags ("relations") survives cache items so we can reliably invalidate on them.
+ * - Redis configured with any `volatile-*` eviction policy, or `noeviction` if you are sure to never fill up memory
+ *   - This is to guarantee that tags ("relations") survives cache items so we can reliably invalidate on them,
+ *     which is archived by always storing cache with a expiry, while Set is without expiry (non-volatile).
  * - As we use Redis "SPOP" command with count argument for invalidation:
  *   - Redis 3.2 or higher
  *   - PHP Redis 3.1.3 or higher, or Predis
- *
- * Design
- * - Cache items are stored with:
- *   - Expiry in Redis is set to 10days when no lifetime is set, to make sure they get evicted before tags
- *   - Symfony Marshaller is used so we can use for instance Igbinary for smaller size & faster unserialization
- * - For tags instead of time based invalidation which needs to retrieve the timestamps all the time, use invalidation:
- *   - Use Redis Sets for Tags, appending related keys on the tags, with no expiry on the Set
- *   - Fetches and resets Set on invalidation by tag, in a pipeline operation.
- *   - Uses Redis "Set" datatype limited to 4 billion ids per tag
  */
 final class RedisTagAwareAdapter extends AbstractTagAwareAdapter implements TagAwareAdapterInterface
 {
@@ -74,26 +66,22 @@ final class RedisTagAwareAdapter extends AbstractTagAwareAdapter implements TagA
      */
     protected function doSave(array $values, $lifetime)
     {
-        $failed = [];
-        $serialized = $this->marshaller->marshall($values, $failed);
-        if (empty($serialized)) {
+        if (!$serialized = $this->marshaller->marshall($values, $failed)) {
             return $failed;
         }
 
         // Prepare tag data we want to store for use when needed by invalidateTags().
-        $getId = $this->getId;
         $tagSets = [];
         foreach ($values as $id => $value) {
             foreach ($value['tags'] as $tag) {
-                $tagSets[$getId(self::TAGS_PREFIX . $tag)][] = $id;
+                $tagSets[$this->getId(self::TAGS_PREFIX . $tag)][] = $id;
             }
         }
 
         // While pipeline isn't supported on RedisCluster, other setups will at least benefit from doing this in one op
         $results = $this->pipeline(function () use ($serialized, $lifetime, $tagSets) {
-            // 1: Store cache items
+            // 1: Store cache items, force a ttl if none is set, as there is no MSETEX we need to set each one
             foreach ($serialized as $id => $value) {
-                // Note: There is no MSETEX so we need to set each one
                 yield 'setEx' => [
                     $id,
                     0 >= $lifetime ? self::FORCED_ITEM_TTL : $lifetime,
@@ -134,8 +122,7 @@ final class RedisTagAwareAdapter extends AbstractTagAwareAdapter implements TagA
         }
 
         // Using MGET for speed on RedisCluster as pipeline is not supported there
-        $values = $this->redis->mget($ids);
-        foreach ($values as $key => $v) {
+        foreach ($this->redis->mget($ids) as $key => $v) {
             // Not found items will have value as false, key will be same as on $ids
             if ($v) {
                 yield $ids[$key] => $this->marshaller->unmarshall($v);
@@ -154,25 +141,23 @@ final class RedisTagAwareAdapter extends AbstractTagAwareAdapter implements TagA
             return;
         }
 
-        // Retrive and delete items in bulk of 10.000 at a time to not overflow buffers
-        // NOTE: Nicolas wants to look into rather finding a way to do invalidation with Lua on the Redis server
+        // Retrieve and delete items in bulk of 10.000 at a time to not overflow buffers
+        //
+        // NOTE: Nicolas wants to look into rather finding a way to do invalidation with Lua on the Redis server.
         //       Reason is that the design here can risk ending up in a endless loop if a items are rapidly added
         //       with the tag(s) we try to invalidate. On RedisCluster a Lua approach would need to run on all servers.
-        $getId = $this->getId;
         do {
-            $tagIdSets = $this->pipeline(function () use ($tags, $getId) {
+            $tagIdSets = $this->pipeline(function () use ($tags) {
                 foreach (array_unique($tags) as $tag) {
                     // Requires Predis or PHP Redis 3.1.3+ (https://github.com/phpredis/phpredis/commit/d2e203a6)
-                    yield 'sPop' => [$getId(self::TAGS_PREFIX . $tag), self::BULK_INVALIDATION_POP_LIMIT];
+                    yield 'sPop' => [$this->getId(self::TAGS_PREFIX . $tag), self::BULK_INVALIDATION_POP_LIMIT];
                 }
             });
 
-            // flatten generator result from pipleline, cache keys should already be prefixed as id's from doSave()
-            $ids = [];
-            foreach ($tagIdSets as $tagIds) {
-                $ids = array_merge($tagIds, $ids);
-            }
+            // flatten generator result from pipleline
+            $ids = array_merge(...iterator_to_array($tagIdSets, false));
 
+            // delete ids
             $this->doDelete(array_unique($ids));
         } while (count($ids) >= self::BULK_INVALIDATION_POP_LIMIT);
 

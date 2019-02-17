@@ -25,7 +25,7 @@ use Symfony\Component\Cache\Traits\AbstractTrait;
  */
 abstract class AbstractTagAwareAdapter implements AdapterInterface, LoggerAwareInterface, ResettableInterface
 {
-    use AbstractTrait;
+    use AbstractTrait { getId as protected; }
 
     protected const TAGS_PREFIX = "\0tags\0";
 
@@ -36,14 +36,6 @@ abstract class AbstractTagAwareAdapter implements AdapterInterface, LoggerAwareI
      * NOTE: Not relevant in this way in Symfony 4+ where Abstract trait already uses this
      */
     protected $marshaller;
-
-    /**
-     * @var callable
-     *
-     * @todo Find a way to avoid this, a way that also works for FilesystemTagAwareAdapter.
-     *       It's currently like this in order to expose getId() from AbstractTrait to RedisTagAwareAdapter.
-     */
-    protected $getId;
 
     /**
      * @param string $namespace
@@ -101,10 +93,6 @@ abstract class AbstractTagAwareAdapter implements AdapterInterface, LoggerAwareI
             null,
             CacheItem::class
         );
-
-        //<diff:AbstractAdapter> Expose getId() to child classes, todo find another way to prefix tags.
-        $this->getId = $getId;
-        //</diff:AbstractAdapter>
     }
 
     /**

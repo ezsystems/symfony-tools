@@ -81,7 +81,7 @@ final class FilesystemTagAwareAdapter extends AbstractTagAwareAdapter implements
         foreach ($tagSet as $tag => $itemsData) {
             $tagFolder = $this->getTagFolder($tag);
             foreach ($itemsData as $data) {
-                $fs->symlink($data['file'], $tagFolder . $this->getTagKeyFile($data['id']));
+                $fs->symlink($data['file'], $tagFolder . $this->getTagIdFile($data['id']));
             }
         }
 
@@ -102,7 +102,7 @@ final class FilesystemTagAwareAdapter extends AbstractTagAwareAdapter implements
 
         foreach ($ids as $id) {
             $file = $this->getFile($id);
-            if (!file_exists($file) || !$h = @fopen($file, 'r')) {
+            if (!file_exists($file) || !$h = @fopen($file, 'rb')) {
                 continue;
             }
             if (($expiresAt = (int) fgets($h)) && $now >= $expiresAt) {
@@ -122,9 +122,7 @@ final class FilesystemTagAwareAdapter extends AbstractTagAwareAdapter implements
     }
 
     /**
-     * @param array $tags
-     *
-     * @return bool|void
+     * {@inheritdoc}
      */
     public function invalidateTags(array $tags)
     {
@@ -155,6 +153,26 @@ final class FilesystemTagAwareAdapter extends AbstractTagAwareAdapter implements
         return true;
     }
 
+    /**
+     * This method overrides {@see \Symfony\Component\Cache\Traits\FilesystemCommonTrait::getFile}.
+     *
+     * Backports Symfony 4 optimization of using md5 instead of sha1, given this is used on reads.
+     *
+     * {@inheritdoc}
+     */
+    private function getFile($id, $mkdir = false)
+    {
+        // Use MD5 to favor speed over security, which is not an issue here
+        $hash = str_replace('/', '-', base64_encode(hash('md5', static::class . $id, true)));
+        $dir = $this->directory.strtoupper($hash[0] . \DIRECTORY_SEPARATOR . $hash[1] . \DIRECTORY_SEPARATOR);
+
+        if ($mkdir && !file_exists($dir)) {
+            @mkdir($dir, 0777, true);
+        }
+
+        return $dir . substr($hash, 2, 20);
+    }
+
     private function getFilesystem(): Filesystem
     {
         return $this->fs ?? $this->fs = new Filesystem();
@@ -165,9 +183,10 @@ final class FilesystemTagAwareAdapter extends AbstractTagAwareAdapter implements
         return $this->directory . self::TAG_FOLDER . \DIRECTORY_SEPARATOR . str_replace('/', '-', $tag) . \DIRECTORY_SEPARATOR;
     }
 
-    private function getTagKeyFile($key): string
+    private function getTagIdFile($id): string
     {
-        $hash = str_replace('/', '-', base64_encode(hash('sha256', static::class . $key, true)));
+        // Use MD5 to favor speed over security, which is not an issue here
+        $hash = str_replace('/', '-', base64_encode(hash('md5', static::class . $id, true)));
 
         return substr($hash, 0, 20);
     }
