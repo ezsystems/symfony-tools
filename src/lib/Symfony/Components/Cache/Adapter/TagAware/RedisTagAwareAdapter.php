@@ -1,13 +1,17 @@
 <?php
 
-/**
- * @copyright Copyright (C) eZ Systems AS. All rights reserved.
- * @license For full copyright and license information view LICENSE file distributed with this source code.
+/*
+ * This file is part of the Symfony package.
+ *
+ * (c) Fabien Potencier <fabien@symfony.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
  */
 
 declare(strict_types=1);
 
-namespace EzSystems\SymfonyTools\Incubator\Cache\TagAware;
+namespace Symfony\Component\Cache\Adapter\TagAware;
 
 use Predis;
 use Predis\Response\Status;
@@ -18,21 +22,26 @@ use Symfony\Component\Cache\Traits\RedisTrait;
  * Class RedisTagAwareAdapter, stores tag <> id relationship as a Set so we don't need to fetch tags on get* operations.
  *
  * Requirements/Limitations:
+ *   - Redis 3.2+ (sPOP)
+ *   - PHP Redis 3.1.3+ (sPOP) or Predis
  * - Redis configured with any `volatile-*` eviction policy, or `noeviction` if you are sure to never fill up memory
  *   - This is to guarantee that tags ("relations") survives cache items so we can reliably invalidate on them,
  *     which is archived by always storing cache with a expiry, while Set is without expiry (non-volatile).
- * - As we use Redis "SPOP" command with count argument for invalidation:
- *   - Redis 3.2 or higher
- *   - PHP Redis 3.1.3 or higher, or Predis
+ * - Max 2 billion keys per tag, so if you use a "all" items tag for expiry, that limits you to 2 billion items
  */
 final class RedisTagAwareAdapter extends AbstractTagAwareAdapter implements TagAwareAdapterInterface
 {
     use RedisTrait;
 
     /**
-     * Limit for how many items are popped from tags per iteration to not run out of memory pipelining deletes.
+     * Redis "Set" can hold more than 4 billion members, here we limit ourselves to PHP's > 2 billion max int (32Bit).
      */
-    private const BULK_INVALIDATION_POP_LIMIT = 10000;
+    private const POP_MAX_LIMIT = 2147483647 - 1;
+
+    /**
+     * Limits for how many keys are deleted in batch.
+     */
+    private const BULK_DELETE_LIMIT = 10000;
 
     /**
      * On cache items without a lifetime set, we force it to 10 days.
@@ -44,6 +53,8 @@ final class RedisTagAwareAdapter extends AbstractTagAwareAdapter implements TagA
      * @param \Redis|\RedisArray|\RedisCluster|\Predis\Client $redisClient     The redis client
      * @param string                                          $namespace       The default namespace
      * @param int                                             $defaultLifetime The default lifetime
+     *
+     * @throws \Exception If phpredis is in use but with version lower then 3.1.3.
      */
     public function __construct($redisClient, string $namespace = '', int $defaultLifetime = 0)
     {
@@ -51,7 +62,7 @@ final class RedisTagAwareAdapter extends AbstractTagAwareAdapter implements TagA
 
         // Make sure php-redis is 3.1.3 or higher configured for Redis classes
         if (!$this->redis instanceof Predis\Client && version_compare(phpversion('redis'), '3.1.3', '<')) {
-            throw new \Exception('RedisTagAwareAdapter requries php-redis 3.1.3 or higher, alternativly use predis/predis');
+            throw new \Exception('RedisTagAwareAdapter requries php-redis 3.1.3 or higher, alternatively use predis/predis');
         }
     }
 
@@ -66,7 +77,7 @@ final class RedisTagAwareAdapter extends AbstractTagAwareAdapter implements TagA
      */
     protected function doSave(array $values, $lifetime)
     {
-        if (!$serialized = $this->marshaller->marshall($values, $failed)) {
+        if (!$serialized = self::$marshaller->marshall($values, $failed)) {
             return $failed;
         }
 
@@ -74,13 +85,13 @@ final class RedisTagAwareAdapter extends AbstractTagAwareAdapter implements TagA
         $tagSets = [];
         foreach ($values as $id => $value) {
             foreach ($value['tags'] as $tag) {
-                $tagSets[$this->getId(self::TAGS_PREFIX . $tag)][] = $id;
+                $tagSets[$this->getId(self::TAGS_PREFIX.$tag)][] = $id;
             }
         }
 
         // While pipeline isn't supported on RedisCluster, other setups will at least benefit from doing this in one op
         $results = $this->pipeline(function () use ($serialized, $lifetime, $tagSets) {
-            // 1: Store cache items, force a ttl if none is set, as there is no MSETEX we need to set each one
+            // Store cache items, force a ttl if none is set, as there is no MSETEX we need to set each one
             foreach ($serialized as $id => $value) {
                 yield 'setEx' => [
                     $id,
@@ -89,7 +100,7 @@ final class RedisTagAwareAdapter extends AbstractTagAwareAdapter implements TagA
                 ];
             }
 
-            // 2: append tag sets, method to add with array values differs on PHP Redis clients
+            // Append tag sets, method to add with array values differs on PHP Redis clients
             $method = $this->redis instanceof Predis\Client ? 'sAdd' : 'sAddArray';
             foreach ($tagSets as $tagId => $ids) {
                 yield $method => [$tagId, $ids];
@@ -111,26 +122,6 @@ final class RedisTagAwareAdapter extends AbstractTagAwareAdapter implements TagA
     }
 
     /**
-     * This method overrides @see \Symfony\Component\Cache\Traits\RedisTrait::doFetch in order to use mget & marshaller.
-     *
-     * {@inheritdoc}
-     */
-    protected function doFetch(array $ids)
-    {
-        if (empty($ids)) {
-            return [];
-        }
-
-        // Using MGET for speed on RedisCluster as pipeline is not supported there
-        foreach ($this->redis->mget($ids) as $key => $v) {
-            // Not found items will have value as false, key will be same as on $ids
-            if ($v) {
-                yield $ids[$key] => $this->marshaller->unmarshall($v);
-            }
-        }
-    }
-
-    /**
      * @param array $tags
      *
      * @return bool|void
@@ -141,25 +132,22 @@ final class RedisTagAwareAdapter extends AbstractTagAwareAdapter implements TagA
             return;
         }
 
-        // Retrieve and delete items in bulk of 10.000 at a time to not overflow buffers
-        //
-        // NOTE: Nicolas wants to look into rather finding a way to do invalidation with Lua on the Redis server.
-        //       Reason is that the design here can risk ending up in a endless loop if a items are rapidly added
-        //       with the tag(s) we try to invalidate. On RedisCluster a Lua approach would need to run on all servers.
-        do {
-            $tagIdSets = $this->pipeline(function () use ($tags) {
-                foreach (array_unique($tags) as $tag) {
-                    // Requires Predis or PHP Redis 3.1.3+ (https://github.com/phpredis/phpredis/commit/d2e203a6)
-                    yield 'sPop' => [$this->getId(self::TAGS_PREFIX . $tag), self::BULK_INVALIDATION_POP_LIMIT];
-                }
-            });
+        // Pop all tag info at once to avoid race conditions
+        $tagIdSets = $this->pipeline(function () use ($tags) {
+            foreach (array_unique($tags) as $tag) {
+                // Requires Predis or PHP Redis 3.1.3+: https://github.com/phpredis/phpredis/commit/d2e203a6
+                // And Redis 3.2: https://redis.io/commands/spop
+                yield 'sPop' => [$this->getId(self::TAGS_PREFIX.$tag), self::POP_MAX_LIMIT];
+            }
+        });
 
-            // flatten generator result from pipleline
-            $ids = array_merge(...iterator_to_array($tagIdSets, false));
+        // Flatten generator result from pipleline, ignore keys (tag ids)
+        $ids = array_unique(array_merge(...iterator_to_array($tagIdSets, false)));
 
-            // delete ids
-            $this->doDelete(array_unique($ids));
-        } while (count($ids) >= self::BULK_INVALIDATION_POP_LIMIT);
+        // Delete chunks of id's
+        while (!empty($ids)) {
+            $this->doDelete(\array_slice($ids, 0, self::BULK_DELETE_LIMIT));
+        }
 
         return true;
     }

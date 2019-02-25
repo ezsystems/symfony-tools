@@ -15,23 +15,23 @@ See: https://github.com/symfony/symfony/commits/master/src/Symfony/Component/Cac
 ## Requirements
 - Symfony 3.4, PHP 7.1+
 - For usage eZ Platform v2: `ezsystems/ezpublish-kernel` v7.3.5, v7.4.3 or higher.
-- For `FilesystemTagAwareAdapter` usage: _No particular needs._
 - For `RedisTagAwareAdapter` usage:
     - [PHP Redis](https://pecl.php.net/package/redis) extension v3.1.3 or higher, _or_ [Predis](https://packagist.org/packages/predis/predis)
     - Redis 3.2 or higher, configured with `noeviction` or any `volatile-*` eviction policy
 
 ## Configuration
 After installing the bundle, you have to configure proper services in order to use this.
-Here is an example on how to do that with eZ Platform:
+
+**Here is an example on how to do that with eZ Platform:**
 
 
 ### File system cache
 
-In `app/config/cache_pool/app.cache.filesystem.yml`, place the following:
+In `app/config/cache_pool/app.cache.tagaware.filesystem.yml`, place the following:
 ```yaml
 services:
-    app.cache.filesystem:
-        class: EzSystems\SymfonyTools\Incubator\Cache\TagAware\FilesystemTagAwareAdapter
+    app.cache.tagaware.filesystem:
+        class: Symfony\Component\Cache\Adapter\TagAware\FilesystemTagAwareAdapter
         parent: cache.adapter.filesystem
         tags:
             - name: cache.pool
@@ -47,7 +47,7 @@ services:
 
 Once that is done you can enable the handler, for instance by setting the following environment variable for PHP:
 ```bash
-export CACHE_POOL="app.cache.filesystem"
+export CACHE_POOL="app.cache.tagaware.filesystem"
 ```
 
 _Then clear cache and restart web server, you'll be able to verify it's in use on Symfony's web debug toolbar._
@@ -55,11 +55,11 @@ _Then clear cache and restart web server, you'll be able to verify it's in use o
 
 ### Redis cache
 
-In `app/config/cache_pool/app.cache.redis.yml`, place the following:
+In `app/config/cache_pool/app.cache.tagaware.redis.yml`, place the following:
 ```yaml
 services:
-    app.cache.redis:
-        class: EzSystems\SymfonyTools\Incubator\Cache\TagAware\RedisTagAwareAdapter
+    app.cache.tagaware.redis:
+        class: Symfony\Component\Cache\Adapter\TagAware\RedisTagAwareAdapter
         parent: cache.adapter.redis
         tags:
             - name: cache.pool
@@ -81,12 +81,12 @@ services:
 
 Once that is done you can enable the handler, for instance by setting the following environment variable for PHP:
 ```bash
-export CACHE_POOL="app.cache.redis"
+export CACHE_POOL="app.cache.tagaware.redis"
 ```
 If you don't have redis, for testing you can use:
 - Run: `docker run --name my-redis -p 6379:6379 -d redis`.
 - Stop + Remove: `docker rm -f my-redis`.
-- Debug: `printf "PING\r\n";) | nc localhost 6379 `.
+- Debug: `printf "PING\r\n" | nc localhost 6379`, should return `+PONG`.
 
 
 _Then clear cache and restart web server, you'll be able to verify it's in use on Symfony's web debug toolbar._

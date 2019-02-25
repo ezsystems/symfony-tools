@@ -1,11 +1,17 @@
 <?php
 
-/**
- * @copyright Copyright (C) eZ Systems AS. All rights reserved.
- * @license For full copyright and license information view LICENSE file distributed with this source code.
+/*
+ * This file is part of the Symfony package.
+ *
+ * (c) Fabien Potencier <fabien@symfony.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
  */
 
-namespace EzSystems\SymfonyTools\Incubator\Cache\TagAware;
+declare(strict_types=1);
+
+namespace Symfony\Component\Cache\Adapter\TagAware;
 
 use Psr\Cache\CacheItemInterface;
 use Psr\Log\LoggerAwareInterface;
@@ -35,7 +41,7 @@ abstract class AbstractTagAwareAdapter implements AdapterInterface, LoggerAwareI
      * @var \Symfony\Component\Cache\Marshaller\MarshallerInterface
      * NOTE: Not relevant in this way in Symfony 4+ where Abstract trait already uses this
      */
-    protected $marshaller;
+    protected static $marshaller;
 
     /**
      * @param string $namespace
@@ -44,9 +50,9 @@ abstract class AbstractTagAwareAdapter implements AdapterInterface, LoggerAwareI
      *
      * @throws \Symfony\Component\Cache\Exception\CacheException
      */
-    protected function __construct($namespace = '', $defaultLifetime = 0, MarshallerInterface $marshaller = null)
+    protected function __construct(string $namespace = '', int $defaultLifetime = 0, MarshallerInterface $marshaller = null)
     {
-        $this->marshaller = $marshaller ?? new DefaultMarshaller();
+        self::$marshaller = $marshaller ?? new DefaultMarshaller();
 
         $this->namespace = '' === $namespace ? '' : CacheItem::validateKey($namespace) . ':';
         if (null !== $this->maxIdLength && \strlen($namespace) > $this->maxIdLength - 24) {
@@ -261,6 +267,6 @@ abstract class AbstractTagAwareAdapter implements AdapterInterface, LoggerAwareI
      */
     protected static function unserialize($value)
     {
-        throw new \Exception('Not in use, use $this->marshaller');
+        return self::$marshaller->unmarshall($value);
     }
 }

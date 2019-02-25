@@ -1,13 +1,17 @@
 <?php
 
-/**
- * @copyright Copyright (C) eZ Systems AS. All rights reserved.
- * @license For full copyright and license information view LICENSE file distributed with this source code.
+/*
+ * This file is part of the Symfony package.
+ *
+ * (c) Fabien Potencier <fabien@symfony.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
  */
 
 declare(strict_types=1);
 
-namespace EzSystems\SymfonyTools\Incubator\Cache\TagAware;
+namespace Symfony\Component\Cache\Adapter\TagAware;
 
 use Symfony\Component\Cache\Adapter\TagAwareAdapterInterface;
 use Symfony\Component\Cache\Traits\FilesystemTrait;
@@ -35,7 +39,7 @@ final class FilesystemTagAwareAdapter extends AbstractTagAwareAdapter implements
      */
     private $fs;
 
-    public function __construct($namespace = '', $defaultLifetime = 0, $directory = null)
+    public function __construct(string $namespace = '', int $defaultLifetime = 0, string $directory = null)
     {
         parent::__construct('', $defaultLifetime);
         $this->init($namespace, $directory);
@@ -53,7 +57,7 @@ final class FilesystemTagAwareAdapter extends AbstractTagAwareAdapter implements
     protected function doSave(array $values, $lifetime)
     {
         $failed = [];
-        $serialized = $this->marshaller->marshall($values, $failed);
+        $serialized = self::$marshaller->marshall($values, $failed);
         if (empty($serialized)) {
             return $failed;
         }
@@ -89,39 +93,6 @@ final class FilesystemTagAwareAdapter extends AbstractTagAwareAdapter implements
     }
 
     /**
-     * This method overrides {@see \Symfony\Component\Cache\Traits\FilesystemTrait::doFetch}.
-     *
-     * It needs to be overridden due to the usage of `parent::unserialize()` in the original method.
-     *
-     * {@inheritdoc}
-     */
-    protected function doFetch(array $ids)
-    {
-        $values = [];
-        $now = time();
-
-        foreach ($ids as $id) {
-            $file = $this->getFile($id);
-            if (!file_exists($file) || !$h = @fopen($file, 'rb')) {
-                continue;
-            }
-            if (($expiresAt = (int) fgets($h)) && $now >= $expiresAt) {
-                fclose($h);
-                @unlink($file);
-            } else {
-                $i = rawurldecode(rtrim(fgets($h)));
-                $value = stream_get_contents($h);
-                fclose($h);
-                if ($i === $id) {
-                    $values[$id] = $this->marshaller->unmarshall($value);
-                }
-            }
-        }
-
-        return $values;
-    }
-
-    /**
      * {@inheritdoc}
      */
     public function invalidateTags(array $tags)
@@ -138,7 +109,7 @@ final class FilesystemTagAwareAdapter extends AbstractTagAwareAdapter implements
 
             foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($this->getTagFolder($tag), \FilesystemIterator::SKIP_DOTS)) as $itemLink) {
                 if (!$itemLink->isLink()) {
-                    throw new \Exception('Tag link is not a link: ' . $itemLink);
+                    throw new \Exception('Tag link is not a link: '.$itemLink);
                 }
 
                 $valueFile = $itemLink->getRealPath();
@@ -146,7 +117,7 @@ final class FilesystemTagAwareAdapter extends AbstractTagAwareAdapter implements
                     @unlink($valueFile);
                 }
 
-                @unlink((string)$itemLink);
+                @unlink((string) $itemLink);
             }
         }
 
@@ -164,13 +135,13 @@ final class FilesystemTagAwareAdapter extends AbstractTagAwareAdapter implements
     {
         // Use MD5 to favor speed over security, which is not an issue here
         $hash = str_replace('/', '-', base64_encode(hash('md5', static::class . $id, true)));
-        $dir = $this->directory.strtoupper($hash[0] . \DIRECTORY_SEPARATOR . $hash[1] . \DIRECTORY_SEPARATOR);
+        $dir = $this->directory.strtoupper($hash[0].\DIRECTORY_SEPARATOR.$hash[1].\DIRECTORY_SEPARATOR);
 
         if ($mkdir && !file_exists($dir)) {
             @mkdir($dir, 0777, true);
         }
 
-        return $dir . substr($hash, 2, 20);
+        return $dir.substr($hash, 2, 20);
     }
 
     private function getFilesystem(): Filesystem
@@ -180,22 +151,14 @@ final class FilesystemTagAwareAdapter extends AbstractTagAwareAdapter implements
 
     private function getTagFolder($tag): string
     {
-        return $this->directory . self::TAG_FOLDER . \DIRECTORY_SEPARATOR . str_replace('/', '-', $tag) . \DIRECTORY_SEPARATOR;
+        return $this->directory.self::TAG_FOLDER.\DIRECTORY_SEPARATOR.str_replace('/', '-', $tag).\DIRECTORY_SEPARATOR;
     }
 
     private function getTagIdFile($id): string
     {
         // Use MD5 to favor speed over security, which is not an issue here
-        $hash = str_replace('/', '-', base64_encode(hash('md5', static::class . $id, true)));
+        $hash = str_replace('/', '-', base64_encode(hash('md5', static::class.$id, true)));
 
         return substr($hash, 0, 20);
-    }
-
-    /**
-     * @internal for unit tests only
-     */
-    public function setFilesystem(Filesystem $fs)
-    {
-        $this->fs = $fs;
     }
 }
