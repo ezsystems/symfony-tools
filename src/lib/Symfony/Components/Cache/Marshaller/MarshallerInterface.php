@@ -7,6 +7,10 @@
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
+ *
+ * Original source:
+ * https://github.com/symfony/symfony/blob/master/src/Symfony/Component/Cache/Marshaller/MarshallerInterface.php
+ * Last revision: https://github.com/symfony/symfony/commit/3cfdc9e9d739dda0bc8d222d458e6bbb34c10c72
  */
 
 namespace Symfony\Component\Cache\Marshaller;
