@@ -261,9 +261,7 @@ abstract class AbstractTagAwareAdapter implements AdapterInterface, LoggerAwareI
     }
 
     /**
-     * Overload unserialize() in order to deprecate and throw on use.
-     *
-     * @deprecated use $this->marshaller instead
+     * Overload unserialize() in order to use marshaller.
      */
     protected static function unserialize($value)
     {
