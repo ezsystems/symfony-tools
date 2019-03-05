@@ -145,8 +145,8 @@ final class RedisTagAwareAdapter extends AbstractTagAwareAdapter implements TagA
         $ids = array_unique(array_merge(...iterator_to_array($tagIdSets, false)));
 
         // Delete chunks of id's
-        while (!empty($ids)) {
-            $this->doDelete(\array_slice($ids, 0, self::BULK_DELETE_LIMIT));
+        foreach (\array_chunk($ids, self::BULK_DELETE_LIMIT) as $chunkIds) {
+            $this->doDelete($chunkIds);
         }
 
         return true;
