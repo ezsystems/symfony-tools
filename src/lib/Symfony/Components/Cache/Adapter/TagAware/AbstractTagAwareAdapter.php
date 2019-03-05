@@ -59,7 +59,7 @@ abstract class AbstractTagAwareAdapter implements AdapterInterface, LoggerAwareI
             throw new InvalidArgumentException(sprintf('Namespace must be %d chars max, %d given ("%s")', $this->maxIdLength - 24, \strlen($namespace), $namespace));
         }
         $this->createCacheItem = \Closure::bind(
-            function ($key, $value, $isHit) use ($defaultLifetime) {
+            static function ($key, $value, $isHit) use ($defaultLifetime) {
                 $item = new CacheItem();
                 $item->key = $key;
                 //<diff:AbstractAdapter> extract Value and Tags from the cache value
@@ -76,7 +76,7 @@ abstract class AbstractTagAwareAdapter implements AdapterInterface, LoggerAwareI
         );
         $getId = function ($key) { return $this->getId((string) $key); };
         $this->mergeByLifetime = \Closure::bind(
-            function ($deferred, $namespace, &$expiredIds) use ($getId) {
+            static function ($deferred, $namespace, &$expiredIds) use ($getId) {
                 $byLifetime = [];
                 $now = time();
                 $expiredIds = [];
