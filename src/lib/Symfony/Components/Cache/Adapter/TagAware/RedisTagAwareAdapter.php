@@ -151,6 +151,9 @@ final class RedisTagAwareAdapter extends AbstractTagAwareAdapter implements TagA
             $this->doDelete($chunkIds);
         }
 
+        // Commit deferred changes after invalidation to emulate logic in TagAwareAdapter
+        $this->commit();
+
         return true;
     }
 }

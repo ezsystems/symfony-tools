@@ -107,7 +107,7 @@ final class FilesystemTagAwareAdapter extends AbstractTagAwareAdapter implements
                 continue;
             }
 
-            foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($this->getTagFolder($tag), \FilesystemIterator::SKIP_DOTS)) as $itemLink) {
+            foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($tagsFolder, \FilesystemIterator::SKIP_DOTS)) as $itemLink) {
                 if (!$itemLink->isLink()) {
                     throw new \Exception('Tag link is not a link: '.$itemLink);
                 }
@@ -120,6 +120,9 @@ final class FilesystemTagAwareAdapter extends AbstractTagAwareAdapter implements
                 @unlink((string) $itemLink);
             }
         }
+
+        // Commit deferred changes after invalidation to emulate logic in TagAwareAdapter
+        $this->commit();
 
         return true;
     }
