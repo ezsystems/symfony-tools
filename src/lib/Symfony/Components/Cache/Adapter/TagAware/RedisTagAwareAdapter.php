@@ -89,8 +89,11 @@ final class RedisTagAwareAdapter extends AbstractTagAwareAdapter implements TagA
             }
         }
 
+        // Redis method to add with array values differs among PHP Redis clients
+        $addMethod = $this->redis instanceof Predis\Client ? 'sAdd' : 'sAddArray';
+
         // While pipeline isn't supported on RedisCluster, other setups will at least benefit from doing this in one op
-        $results = $this->pipeline(function () use ($serialized, $lifetime, $tagSets) {
+        $results = $this->pipeline(static function () use ($serialized, $lifetime, $tagSets, $addMethod) {
             // Store cache items, force a ttl if none is set, as there is no MSETEX we need to set each one
             foreach ($serialized as $id => $value) {
                 yield 'setEx' => [
@@ -100,10 +103,9 @@ final class RedisTagAwareAdapter extends AbstractTagAwareAdapter implements TagA
                 ];
             }
 
-            // Append tag sets, method to add with array values differs on PHP Redis clients
-            $method = $this->redis instanceof Predis\Client ? 'sAdd' : 'sAddArray';
+            // Append tag sets (tag id => [cacher ids...])
             foreach ($tagSets as $tagId => $ids) {
-                yield $method => [$tagId, $ids];
+                yield $addMethod => [$tagId, $ids];
             }
         });
 

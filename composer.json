@@ -23,7 +23,7 @@
   },
   "require": {
     "php": "^7.1",
-    "symfony/symfony": "^3.4.17"
+    "symfony/symfony": "^3.4.23"
   },
   "require-dev": {
     "predis/predis": "^1.1.0",

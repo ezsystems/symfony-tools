@@ -74,7 +74,7 @@ abstract class AbstractTagAwareAdapter implements AdapterInterface, LoggerAwareI
             null,
             CacheItem::class
         );
-        $getId = function ($key) { return $this->getId((string) $key); };
+        $getId = \Closure::fromCallable([$this, 'getId']);
         $this->mergeByLifetime = \Closure::bind(
             static function ($deferred, $namespace, &$expiredIds) use ($getId) {
                 $byLifetime = [];
