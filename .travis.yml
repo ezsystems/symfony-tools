@@ -1,140 +1,48 @@
+dist: xenial
+sudo: required
+
 language: php
 
-dist: trusty
+cache:
+  directories:
+    - "$HOME/.composer/cache"
 
 git:
-    depth: 2
-
-addons:
-    apt_packages:
-        - parallel
-
-env:
-    global:
-        - MIN_PHP=7.1.3
+  depth: 2
 
 matrix:
-    include:
-        - php: 7.1
-        - php: 7.2
-          env: deps=high
-        - php: 7.3
-          env: deps=low
-
-    fast_finish: true
-
-cache:
-    directories:
-        - .phpunit
-        - php-$MIN_PHP
-        - ~/php-ext
+  fast_finish: true
+  include:
+    - php: 7.1
+    - php: 7.2
+      env: ENABLE_IGBINARY=true
+    - php: 7.3
+      env: CHECK_CS=true
 
 services:
-#    - memcached
-    - redis-server
+  - redis-server
+#  - memcached
+
+# test only master + stable (+ Pull requests)
+branches:
+  only:
+    - master
+    - /^\d.\d+$/
 
 before_install:
-
-    - |
-      # General configuration
-      set -e
-      stty cols 120
-      [ -d ~/.composer ] || mkdir ~/.composer
-      cp .composer/* ~/.composer/
-      export PHPUNIT=$(readlink -f ./phpunit)
-      export PHPUNIT_X="$PHPUNIT --exclude-group tty,benchmark,intl-data"
-      export COMPOSER_UP='composer update --no-progress --no-suggest --ansi'
-      export COMPONENTS=$(find src/lib/Symfony -mindepth 3 -type f -name phpunit.xml.dist -printf '%h\n')
-      find ~/.phpenv -name xdebug.ini -delete
-
-      nanoseconds () {
-          local cmd="date"
-          local format="+%s%N"
-          local os=$(uname)
-          if hash gdate > /dev/null 2>&1; then
-            cmd="gdate"
-          elif [[ "$os" = Darwin ]]; then
-            format="+%s000000000"
-          fi
-          $cmd -u $format
-      }
-      export -f nanoseconds
-
-      # tfold is a helper to create folded reports
-      tfold () {
-          local title="🐘 $PHP $1"
-          local fold=$(echo $title | sed -r 's/[^-_A-Za-z0-9]+/./g')
-          shift
-          local id=$(printf %08x $(( RANDOM * RANDOM )))
-          local start=$(nanoseconds)
-          echo -e "travis_fold:start:$fold"
-          echo -e "travis_time:start:$id"
-          echo -e "\\e[1;34m$title\\e[0m"
-
-          bash -xc "$*" 2>&1
-          local ok=$?
-          local end=$(nanoseconds)
-          echo -e "\\ntravis_time:end:$id:start=$start,finish=$end,duration=$(($end-$start))"
-          (exit $ok) &&
-              echo -e "\\e[32mOK\\e[0m $title\\n\\ntravis_fold:end:$fold" ||
-              echo -e "\\e[41mKO\\e[0m $title\\n"
-          (exit $ok)
-      }
-      export -f tfold
-
-      # tpecl is a helper to compile and cache php extensions
-      tpecl () {
-          local ext_name=$1
-          local ext_so=$2
-          local INI=$3
-          local ext_dir=$(php -r "echo ini_get('extension_dir');")
-          local ext_cache=~/php-ext/$(basename $ext_dir)/$ext_name
-
-          if [[ -e $ext_cache/$ext_so ]]; then
-              echo extension = $ext_cache/$ext_so >> $INI
-          else
-              rm ~/.pearrc /tmp/pear 2>/dev/null || true
-              mkdir -p $ext_cache
-              echo yes | pecl install -f $ext_name &&
-              cp $ext_dir/$ext_so $ext_cache
-          fi
-      }
-      export -f tpecl
-
-    - |
-      # php.ini configuration
-      for PHP in $TRAVIS_PHP_VERSION $php_extra; do
-          phpenv global $PHP 2>/dev/null || (cd / && wget https://s3.amazonaws.com/travis-php-archives/binaries/ubuntu/14.04/x86_64/php-$PHP.tar.bz2 -O - | tar -xj)
-          INI=~/.phpenv/versions/$PHP/etc/conf.d/travis.ini
-          echo date.timezone = Europe/Paris >> $INI
-          echo memory_limit = -1 >> $INI
-          echo session.gc_probability = 0 >> $INI
-          # echo opcache.enable_cli = 1 >> $INI
-          # echo apc.enable_cli = 1 >> $INI
-          echo extension = redis.so >> $INI
-          # echo extension = memcached.so >> $INI
-      done
-
-    - |
-      # Install extra PHP extensions
-      for PHP in $TRAVIS_PHP_VERSION $php_extra; do
-          export PHP=$PHP
-          phpenv global $PHP
-          INI=~/.phpenv/versions/$PHP/etc/conf.d/travis.ini
-          tfold ext.igbinary tpecl igbinary-2.0.8 igbinary.so $INI
-      done
+  - phpenv config-rm xdebug.ini
 
 install:
-    - php -i
-    - |
-      run_tests () {
-          set -e
-          export PHP=$1
-          phpenv global $PHP
-          tfold 'composer update' $COMPOSER_UP
-          tfold 'phpunit install' ./phpunit install
-          echo "$COMPONENTS" | parallel --gnu "tfold {} $PHPUNIT_X {}"
-      }
+#  - echo "extension = memcached.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/conf.d/travis.ini
+  - echo "extension = redis.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/conf.d/travis.ini
+  - if [ "$ENABLE_IGBINARY" != "" ] ; then pecl install igbinary ; fi
+  - if [ "$ENABLE_LZF" != "" ] ; then printf "no\n" | pecl install lzf ; fi
+  - travis_retry composer install --prefer-dist --no-interaction
 
 script:
-    - for PHP in $TRAVIS_PHP_VERSION $php_extra; do (run_tests $PHP); done
+  - composer test
+  - if [ "$CHECK_CS" != "" ]; then ./vendor/bin/php-cs-fixer fix -v --dry-run --diff --show-progress=estimating; fi
+
+
+notifications:
+  email: false
