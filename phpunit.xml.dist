@@ -15,8 +15,11 @@
     </php>
 
     <testsuites>
-        <testsuite name="Symfony Cache Component Test Suite">
-            <directory>./Tests/</directory>
+        <testsuite name="default">
+            <directory>tests</directory>
+        </testsuite>
+        <testsuite name="Symfony Test Suites">
+            <directory>./src/lib/Symfony/Components/*/Tests/</directory>
         </testsuite>
     </testsuites>
 
@@ -24,8 +27,9 @@
         <whitelist>
             <directory>./</directory>
             <exclude>
-                <directory>./Tests</directory>
+                <directory>./tests</directory>
                 <directory>./vendor</directory>
+                <directory>./src/lib/Symfony/Components/*/Tests/</directory>
             </exclude>
         </whitelist>
     </filter>
