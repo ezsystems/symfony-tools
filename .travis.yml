@@ -30,7 +30,7 @@ branches:
     - /^\d.\d+$/
 
 before_install:
-  - phpenv config-rm xdebug.ini
+#  - phpenv config-rm xdebug.ini
 
 install:
 #  - echo "extension = memcached.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/conf.d/travis.ini
@@ -40,7 +40,8 @@ install:
   - travis_retry composer install --prefer-dist --no-interaction
 
 script:
-  - composer test
+  - ./vendor/bin/phpunit -v
+  #- composer test
   - if [ "$CHECK_CS" != "" ]; then ./vendor/bin/php-cs-fixer fix -v --dry-run --diff --show-progress=estimating; fi
 
 
