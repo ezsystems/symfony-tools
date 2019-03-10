@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace Symfony\Component\Cache\Adapter\TagAware;
 
 use Symfony\Component\Cache\Adapter\TagAwareAdapterInterface;
+use Symfony\Component\Cache\PruneableInterface;
 use Symfony\Component\Cache\Traits\FilesystemTrait;
 use Symfony\Component\Cache\Exception\CacheException;
 use Symfony\Component\Filesystem\Filesystem;
@@ -25,7 +26,7 @@ use Symfony\Component\Filesystem\Filesystem;
  * - skip loading tags info on reads
  * - be able to iterate cache to clear on-demand when invalidation by tags
  */
-final class FilesystemTagAwareAdapter extends AbstractTagAwareAdapter implements TagAwareAdapterInterface
+final class FilesystemTagAwareAdapter extends AbstractTagAwareAdapter implements TagAwareAdapterInterface, PruneableInterface
 {
     use FilesystemTrait {
         doDelete as deleteCache;
