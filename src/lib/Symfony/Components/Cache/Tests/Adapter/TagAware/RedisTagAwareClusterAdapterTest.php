@@ -28,7 +28,7 @@ class RedisTagAwareClusterAdapterTest extends RedisClusterAdapterTest
 
     public function createCachePool($defaultLifetime = 0)
     {
-        $this->assertInstanceOf(RedisClusterProxy::class, self::$redis);
+        $this->assertInstanceOf(\RedisCluster::class, self::$redis);
         $adapter = new RedisTagAwareAdapter(self::$redis, str_replace('\\', '.', __CLASS__), $defaultLifetime);
 
         return $adapter;
