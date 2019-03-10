@@ -22,6 +22,7 @@ matrix:
 services:
   - redis-server
 #  - memcached
+  - docker
 
 # test only master + stable (+ Pull requests)
 branches:
@@ -31,6 +32,11 @@ branches:
 
 before_install:
 #  - phpenv config-rm xdebug.ini
+  - |
+    # Start Redis cluster
+    docker pull grokzen/redis-cluster:4.0.8
+    docker run -d -p 7000:7000 -p 7001:7001 -p 7002:7002 -p 7003:7003 -p 7004:7004 -p 7005:7005 --name redis-cluster grokzen/redis-cluster:4.0.8
+    export REDIS_CLUSTER_HOSTS='localhost:7000 localhost:7001 localhost:7002 localhost:7003 localhost:7004 localhost:7005'
 
 install:
 #  - echo "extension = memcached.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/conf.d/travis.ini
