@@ -14,7 +14,6 @@ namespace Symfony\Component\Cache\Tests\Adapter\TagAware;
 use Symfony\Component\Cache\Adapter\TagAware\RedisTagAwareAdapter;
 use Symfony\Component\Cache\Tests\Adapter\RedisClusterAdapterTest;
 use Symfony\Component\Cache\Tests\Traits\TagAwareTestTrait;
-use Symfony\Component\Cache\Traits\RedisClusterProxy;
 
 class RedisTagAwareClusterAdapterTest extends RedisClusterAdapterTest
 {
