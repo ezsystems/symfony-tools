@@ -11,6 +11,7 @@
 
 namespace Symfony\Component\Cache\Tests\Adapter\TagAware;
 
+use Symfony\Component\Cache\Adapter\TagAware\RedisTagAwareAdapter;
 use Symfony\Component\Cache\Tests\Adapter\RedisArrayAdapterTest;
 use Symfony\Component\Cache\Tests\Traits\TagAwareTestTrait;
 
