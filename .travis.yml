@@ -31,7 +31,7 @@ branches:
     - /^\d.\d+$/
 
 before_install:
-#  - phpenv config-rm xdebug.ini
+  - phpenv config-rm xdebug.ini
   - |
     # Start Redis cluster
     docker pull grokzen/redis-cluster:4.0.8
@@ -46,8 +46,7 @@ install:
   - travis_retry composer install --prefer-dist --no-interaction
 
 script:
-  - ./vendor/bin/phpunit -v
-  #- composer test
+  - composer test
   - if [ "$CHECK_CS" != "" ]; then ./vendor/bin/php-cs-fixer fix -v --dry-run --diff --show-progress=estimating; fi
 
 
