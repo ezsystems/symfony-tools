@@ -77,23 +77,27 @@ final class RedisTagAwareAdapter extends AbstractTagAwareAdapter implements TagA
      */
     protected function doSave(array $values, $lifetime)
     {
+        // Extract tag operations
+        $tagOperations = ['sAdd' => [], 'sRem' => []];
+        foreach ($values as $id => $value) {
+            foreach ($value['tag-operations']['add'] as $tag => $tagId) {
+                $tagOperations['sAdd'][$tagId][] = $id;
+            }
+
+            foreach ($value['tag-operations']['remove'] as $tag => $tagId) {
+                $tagOperations['sRem'][$tagId][] = $id;
+            }
+
+            unset($value['tag-operations']);
+        }
+
+        // serilize values
         if (!$serialized = self::$marshaller->marshall($values, $failed)) {
             return $failed;
         }
 
-        // Prepare tag data we want to store for use when needed by invalidateTags().
-        $tagSets = [];
-        foreach ($values as $id => $value) {
-            foreach ($value['tags'] as $tag) {
-                $tagSets[$this->getId(self::TAGS_PREFIX.$tag)][] = $id;
-            }
-        }
-
-        // Redis method to add with array values differs among PHP Redis clients
-        $addMethod = $this->redis instanceof Predis\Client ? 'sAdd' : 'sAddArray';
-
         // While pipeline isn't supported on RedisCluster, other setups will at least benefit from doing this in one op
-        $results = $this->pipeline(static function () use ($serialized, $lifetime, $tagSets, $addMethod) {
+        $results = $this->pipeline(static function () use ($serialized, $lifetime, $tagOperations) {
             // Store cache items, force a ttl if none is set, as there is no MSETEX we need to set each one
             foreach ($serialized as $id => $value) {
                 yield 'setEx' => [
@@ -103,15 +107,17 @@ final class RedisTagAwareAdapter extends AbstractTagAwareAdapter implements TagA
                 ];
             }
 
-            // Append tag sets (tag id => [cacher ids...])
-            foreach ($tagSets as $tagId => $ids) {
-                yield $addMethod => [$tagId, $ids];
+            // Add and Remove Tags
+            foreach ($tagOperations as $command => $tagSet) {
+                foreach ($tagSet as $tagId => $ids) {
+                    yield $command => array_merge([$tagId], $ids);
+                }
             }
         });
 
         foreach ($results as $id => $result) {
-            // Skip results of "SADD" operation, they'll be 1 or 0 depending on if set value already existed or not
-            if (is_numeric($result) && isset($tagSets[$id])) {
+            // Skip results of SADD/SREM operations, they'll be 1 or 0 depending on if set value already existed or not
+            if (is_numeric($result)) {
                 continue;
             }
             // setEx results
@@ -124,35 +130,53 @@ final class RedisTagAwareAdapter extends AbstractTagAwareAdapter implements TagA
     }
 
     /**
-     * @param array $tags
-     *
-     * @return bool|void
+     * {@inheritdoc}
      */
-    public function invalidateTags(array $tags)
+    protected function doDelete(array $ids, array $tagData = [])
     {
-        if (empty($tags)) {
-            return;
+        if (!$ids) {
+            return true;
         }
 
+        $isPredis = $this->redis instanceof \Predis\Client;
+        $this->pipeline(static function () use ($ids, $tagData, $isPredis) {
+            if ($isPredis) {
+                foreach ($ids as $id) {
+                    yield 'del' => [$id];
+                }
+            } else {
+                yield 'del' => $ids;
+            }
+
+            foreach ($tagData as $tagId => $idMap) {
+                yield 'sRem' => array_merge([$tagId], $idMap);
+            }
+        })->rewind();
+
+        return true;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function doInvalidate(array $tagIds): bool
+    {
         // Pop all tag info at once to avoid race conditions
-        $tagIdSets = $this->pipeline(function () use ($tags) {
-            foreach (array_unique($tags) as $tag) {
-                // Requires Predis or PHP Redis 3.1.3+: https://github.com/phpredis/phpredis/commit/d2e203a6
-                // And Redis 3.2: https://redis.io/commands/spop
-                yield 'sPop' => [$this->getId(self::TAGS_PREFIX.$tag), self::POP_MAX_LIMIT];
+        $tagIdSets = $this->pipeline(static function () use ($tagIds) {
+            foreach ($tagIds as $tag => $tagId) {
+                // Client: Predis or PHP Redis 3.1.3+ (https://github.com/phpredis/phpredis/commit/d2e203a6)
+                // Server: Redis 3.2 or higher (https://redis.io/commands/spop)
+                yield 'sPop' => [$tagId, self::POP_MAX_LIMIT];
             }
         });
 
         // Flatten generator result from pipleline, ignore keys (tag ids)
         $ids = array_unique(array_merge(...iterator_to_array($tagIdSets, false)));
 
-        // Delete chunks of id's
+        // Delete cache in chunks to avoid overloading the connection
         foreach (\array_chunk($ids, self::BULK_DELETE_LIMIT) as $chunkIds) {
             $this->doDelete($chunkIds);
         }
-
-        // Commit deferred changes after invalidation to emulate logic in TagAwareAdapter
-        $this->commit();
 
         return true;
     }

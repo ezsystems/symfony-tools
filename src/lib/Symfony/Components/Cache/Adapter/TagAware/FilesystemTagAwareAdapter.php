@@ -27,7 +27,9 @@ use Symfony\Component\Filesystem\Filesystem;
  */
 final class FilesystemTagAwareAdapter extends AbstractTagAwareAdapter implements TagAwareAdapterInterface
 {
-    use FilesystemTrait;
+    use FilesystemTrait {
+        doDelete as deleteCache;
+    }
 
     /**
      * Folder used for tag symlinks.
@@ -56,6 +58,14 @@ final class FilesystemTagAwareAdapter extends AbstractTagAwareAdapter implements
      */
     protected function doSave(array $values, $lifetime)
     {
+        // Extract and remove tag operations form values
+        $tagOperations = ['add' => [], 'remove' => []];
+        foreach ($values as $id => $value) {
+            $tagOperations['add'][$id] = $value['tag-operations']['add'];
+            $tagOperations['remove'][$id] = $value['tag-operations']['remove'];
+            unset($value['tag-operations']);
+        }
+
         $failed = [];
         $serialized = self::$marshaller->marshall($values, $failed);
         if (empty($serialized)) {
@@ -63,16 +73,11 @@ final class FilesystemTagAwareAdapter extends AbstractTagAwareAdapter implements
         }
 
         $expiresAt = $lifetime ? (time() + $lifetime) : 0;
-        $tagSet = [];
         foreach ($serialized as $id => $value) {
             $file = $this->getFile($id, true);
             if (!$this->write($file, $expiresAt . "\n" . rawurlencode($id) . "\n" . $value, $expiresAt)) {
                 $failed[] = $id;
                 continue;
-            }
-
-            foreach ($values[$id]['tags'] as $tag) {
-                $tagSet[$tag][] = ['file' => $file, 'id' => $id];
             }
         }
 
@@ -80,14 +85,33 @@ final class FilesystemTagAwareAdapter extends AbstractTagAwareAdapter implements
             throw new CacheException(sprintf('Cache directory is not writable (%s)', $this->directory));
         }
 
-        // Save Tags as symlinks, uses Filesystem Component to let it handle exceptions correctly
         $fs = $this->getFilesystem();
-        foreach ($tagSet as $tag => $itemsData) {
-            $tagFolder = $this->getTagFolder($tag);
-            foreach ($itemsData as $data) {
-                $fs->symlink($data['file'], $tagFolder . $this->getTagIdFile($data['id']));
+        // Add Tags as symlinks
+        foreach ($tagOperations['add'] as $id => $tagIds) {
+            if (!empty($failed) && \in_array($id, $failed)) {
+                continue;
+            }
+
+            $file = $this->getFile($id);
+            $itemFileName = $this->getItemLinkFileName($id);
+            foreach ($tagIds as $tagId) {
+                $fs->symlink($file, $this->getTagFolder($tagId).$itemFileName);
             }
         }
+
+        // Unlink removed Tags
+        $files = [];
+        foreach ($tagOperations['remove'] as $id => $tagIds) {
+            if (!empty($failed) && \in_array($id, $failed)) {
+                continue;
+            }
+
+            $itemFileName = $this->getItemLinkFileName($id);
+            foreach ($tagIds as $tagId) {
+                $files[] = $this->getTagFolder($tagId).$itemFileName;
+            }
+        }
+        $fs->remove($files);
 
         return $failed;
     }
@@ -95,14 +119,31 @@ final class FilesystemTagAwareAdapter extends AbstractTagAwareAdapter implements
     /**
      * {@inheritdoc}
      */
-    public function invalidateTags(array $tags)
+    protected function doDelete(array $ids, array $tagData = [])
     {
-        if (empty($tags)) {
-            return;
-        }
+        $ok = $this->deleteCache($ids);
 
-        foreach (array_unique($tags) as $tag) {
-            $tagsFolder = $this->getTagFolder($tag);
+        // Remove tags
+        $files = [];
+        $fs = $this->getFilesystem();
+        foreach ($tagData as $tagId => $idMap) {
+            $tagFolder = $this->getTagFolder($tagId);
+            foreach ($idMap as $id) {
+                $files[] = $tagFolder.$this->getItemLinkFileName($id);
+            }
+        }
+        $fs->remove($files);
+
+        return $ok;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function doInvalidate(array $tagIds): bool
+    {
+        foreach ($tagIds as $tagId) {
+            $tagsFolder = $this->getTagFolder($tagId);
             if (!is_dir($tagsFolder)) {
                 continue;
             }
@@ -121,10 +162,25 @@ final class FilesystemTagAwareAdapter extends AbstractTagAwareAdapter implements
             }
         }
 
-        // Commit deferred changes after invalidation to emulate logic in TagAwareAdapter
-        $this->commit();
-
         return true;
+    }
+
+    private function getFilesystem(): Filesystem
+    {
+        return $this->fs ?? $this->fs = new Filesystem();
+    }
+
+    private function getTagFolder(string $tagId): string
+    {
+        return $this->directory.self::TAG_FOLDER.\DIRECTORY_SEPARATOR.str_replace('/', '-', $tagId).\DIRECTORY_SEPARATOR;
+    }
+
+    private function getItemLinkFileName(string $keyId): string
+    {
+        // Use MD5 to favor speed over security, which is not an issue here
+        $hash = str_replace('/', '-', base64_encode(hash('md5', static::class.$keyId, true)));
+
+        return substr($hash, 0, 20);
     }
 
     /**
@@ -145,23 +201,5 @@ final class FilesystemTagAwareAdapter extends AbstractTagAwareAdapter implements
         }
 
         return $dir.substr($hash, 2, 20);
-    }
-
-    private function getFilesystem(): Filesystem
-    {
-        return $this->fs ?? $this->fs = new Filesystem();
-    }
-
-    private function getTagFolder($tag): string
-    {
-        return $this->directory.self::TAG_FOLDER.\DIRECTORY_SEPARATOR.str_replace('/', '-', $tag).\DIRECTORY_SEPARATOR;
-    }
-
-    private function getTagIdFile($id): string
-    {
-        // Use MD5 to favor speed over security, which is not an issue here
-        $hash = str_replace('/', '-', base64_encode(hash('md5', static::class.$id, true)));
-
-        return substr($hash, 0, 20);
     }
 }

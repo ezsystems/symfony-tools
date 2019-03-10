@@ -26,9 +26,13 @@
     "symfony/symfony": "^3.4.23"
   },
   "require-dev": {
-    "predis/predis": "^1.1.0",
+    "cache/integration-tests": "dev-master",
+    "friendsofphp/php-cs-fixer": "v2.14.0",
+    "phpdocumentor/reflection-docblock": "^3.0|^4.0",
     "phpunit/phpunit": "^7.3",
-    "friendsofphp/php-cs-fixer": "v2.14.0"
+    "predis/predis": "^1.1.0",
+    "symfony/phpunit-bridge": "~3.4|~4.0"
+
   },
   "conflict": {
       "ezsystems/ezpublish-kernel": "7.0 - 7.3.4 | 7.4.0 - 7.4.2"
