@@ -93,10 +93,10 @@ abstract class AbstractTagAwareAdapter implements AdapterInterface, LoggerAwareI
                     $value['tag-operations'] = ['add' => [], 'remove' => []];
                     $oldTags = $item->prevTags ?? [];
                     foreach (array_diff($value['tags'], $oldTags) as $addedTag) {
-                        $value['tag-operations']['add'][$addedTag] = $getId($tagPrefix.$addedTag);
+                        $value['tag-operations']['add'][] = $getId($tagPrefix.$addedTag);
                     }
                     foreach (array_diff($oldTags, $value['tags']) as $removedTag) {
-                        $value['tag-operations']['remove'][$removedTag] = $getId($tagPrefix.$removedTag);
+                        $value['tag-operations']['remove'][] = $getId($tagPrefix.$removedTag);
                     }
 
                     if (null === $item->expiry) {
@@ -301,7 +301,7 @@ abstract class AbstractTagAwareAdapter implements AdapterInterface, LoggerAwareI
         }
 
         try {
-            if ($this->doDelete($ids, $tagData)) {
+            if ($this->doDelete(array_values($ids), $tagData)) {
                 return true;
             }
         } catch (\Exception $e) {
@@ -346,7 +346,7 @@ abstract class AbstractTagAwareAdapter implements AdapterInterface, LoggerAwareI
 
         $tagIds = [];
         foreach (array_unique($tags) as $tag) {
-            $tagIds[$tag] = $this->getId(self::TAG_PREFIX.$tag);
+            $tagIds[] = $this->getId(self::TAG_PREFIX.$tag);
         }
 
         if ($this->doInvalidate($tagIds)) {

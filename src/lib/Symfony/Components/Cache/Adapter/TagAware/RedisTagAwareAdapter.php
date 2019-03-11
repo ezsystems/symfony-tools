@@ -164,7 +164,7 @@ final class RedisTagAwareAdapter extends AbstractTagAwareAdapter implements TagA
     {
         // Pop all tag info at once to avoid race conditions
         $tagIdSets = $this->pipeline(static function () use ($tagIds) {
-            foreach ($tagIds as $tag => $tagId) {
+            foreach ($tagIds as $tagId) {
                 // Client: Predis or PHP Redis 3.1.3+ (https://github.com/phpredis/phpredis/commit/d2e203a6)
                 // Server: Redis 3.2 or higher (https://redis.io/commands/spop)
                 yield 'sPop' => [$tagId, self::POP_MAX_LIMIT];
