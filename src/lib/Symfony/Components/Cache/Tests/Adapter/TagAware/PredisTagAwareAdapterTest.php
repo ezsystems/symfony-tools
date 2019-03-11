@@ -38,7 +38,7 @@ class PredisTagAwareAdapterTest extends PredisAdapterTest
     }
 
     /**
-     * @todo Drop this overloading when RedisTrait is removedin the future (IF cluster improvments are backported to 3.4)
+     * @todo Drop this overloading when zRedisTrait is removed in the future (IF cluster fixes are backported to 3.4)
      */
     public function testCreateConnection()
     {
