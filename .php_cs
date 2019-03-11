@@ -29,6 +29,7 @@ return PhpCsFixer\Config::create()
     ->setRiskyAllowed(true)
     ->setFinder(
         PhpCsFixer\Finder::create()
+            ->exclude('lib/Symfony')
             ->in(__DIR__ . '/src')
             ->files()->name('*.php')
     )

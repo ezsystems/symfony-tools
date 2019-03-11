@@ -1,0 +1,54 @@
+dist: xenial
+sudo: required
+
+language: php
+
+cache:
+  directories:
+    - "$HOME/.composer/cache"
+
+git:
+  depth: 2
+
+matrix:
+  fast_finish: true
+  include:
+    - php: 7.1
+    - php: 7.2
+      env: ENABLE_IGBINARY=true
+    - php: 7.3
+      env: CHECK_CS=true
+
+services:
+  - redis-server
+#  - memcached
+  - docker
+
+# test only master + stable (+ Pull requests)
+branches:
+  only:
+    - master
+    - /^\d.\d+$/
+
+before_install:
+  - phpenv config-rm xdebug.ini
+  - |
+    # Start Redis cluster
+    docker pull grokzen/redis-cluster:4.0.12
+    docker run -d -p 7000:7000 -p 7001:7001 -p 7002:7002 -p 7003:7003 -p 7004:7004 -p 7005:7005 --name redis-cluster grokzen/redis-cluster:4.0.8
+    export REDIS_CLUSTER_HOSTS='localhost:7000 localhost:7001 localhost:7002 localhost:7003 localhost:7004 localhost:7005'
+
+install:
+#  - echo "extension = memcached.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/conf.d/travis.ini
+  - echo "extension = redis.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/conf.d/travis.ini
+  - if [ "$ENABLE_IGBINARY" != "" ] ; then pecl install igbinary ; fi
+  - if [ "$ENABLE_LZF" != "" ] ; then printf "no\n" | pecl install lzf ; fi
+  - travis_retry composer install --prefer-dist --no-interaction
+
+script:
+  - composer test
+  - if [ "$CHECK_CS" != "" ]; then ./vendor/bin/php-cs-fixer fix -v --dry-run --diff --show-progress=estimating; fi
+
+
+notifications:
+  email: false
