@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace Symfony\Component\Cache\Adapter\TagAware;
 
 use Predis;
+use Predis\Connection\Aggregate\ClusterInterface;
 use Predis\Response\Status;
 use Symfony\Component\Cache\Adapter\TagAwareAdapterInterface;
 use Symfony\Component\Cache\Traits\RedisTrait;
@@ -138,9 +139,9 @@ final class RedisTagAwareAdapter extends AbstractTagAwareAdapter implements TagA
             return true;
         }
 
-        $isPredis = $this->redis instanceof \Predis\Client;
-        $this->pipeline(static function () use ($ids, $tagData, $isPredis) {
-            if ($isPredis) {
+        $predisCluster = $this->redis instanceof \Predis\Client && $this->redis->getConnection() instanceof ClusterInterface;
+        $this->pipeline(static function () use ($ids, $tagData, $predisCluster) {
+            if ($predisCluster) {
                 foreach ($ids as $id) {
                     yield 'del' => [$id];
                 }
