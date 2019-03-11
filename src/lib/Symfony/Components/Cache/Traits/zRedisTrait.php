@@ -27,7 +27,7 @@ use Symfony\Component\Cache\Exception\InvalidArgumentException;
  *
  * @internal
  */
-trait RedisTrait
+trait zRedisTrait
 {
     private static $defaultConnectionOptions = [
         'class' => null,

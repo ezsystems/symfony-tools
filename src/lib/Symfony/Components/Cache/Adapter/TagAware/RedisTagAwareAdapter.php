@@ -19,7 +19,7 @@ use Predis;
 use Predis\Connection\Aggregate\ClusterInterface;
 use Predis\Response\Status;
 use Symfony\Component\Cache\Adapter\TagAwareAdapterInterface;
-use Symfony\Component\Cache\Traits\RedisTrait;
+use Symfony\Component\Cache\Traits\zRedisTrait;
 
 /**
  * Class RedisTagAwareAdapter, stores tag <> id relationship as a Set so we don't need to fetch tags on get* operations.
@@ -34,7 +34,7 @@ use Symfony\Component\Cache\Traits\RedisTrait;
  */
 final class RedisTagAwareAdapter extends AbstractTagAwareAdapter implements TagAwareAdapterInterface
 {
-    use RedisTrait;
+    use zRedisTrait;
 
     /**
      * Redis "Set" can hold more than 4 billion members, here we limit ourselves to PHP's > 2 billion max int (32Bit).
