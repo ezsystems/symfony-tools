@@ -48,7 +48,7 @@ final class RedisTagAwareAdapter extends AbstractTagAwareAdapter implements TagA
 
     /**
      * On cache items without a lifetime set, we force it to 10 days.
-     * This is to make sure cache items are *never* cleared before tags are cleared (risking in-consistent cache).
+     * This is to make sure tags are *never* cleared before cache items are cleared (risking in-consistent cache).
      */
     private const FORCED_ITEM_TTL = 864000;
 
