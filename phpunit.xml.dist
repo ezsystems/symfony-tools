@@ -15,8 +15,11 @@
     </php>
 
     <testsuites>
-        <testsuite name="default">
-            <directory>tests</directory>
+        <testsuite name="bundle">
+            <directory>src/bundle/Tests</directory>
+        </testsuite>
+        <testsuite name="lib">
+            <directory>src/lib/Tests</directory>
         </testsuite>
         <testsuite name="Symfony Test Suites">
             <directory>./src/lib/Symfony/Components/*/Tests/</directory>
@@ -27,7 +30,7 @@
         <whitelist>
             <directory>./</directory>
             <exclude>
-                <directory>./tests</directory>
+                <directory>./src/lib/Tests</directory>
                 <directory>./vendor</directory>
                 <directory>./src/lib/Symfony/Components/*/Tests/</directory>
             </exclude>

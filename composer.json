@@ -41,6 +41,11 @@
       "ext-redis": "For use with RedisSessionHandler & RedisTagAwareAdapter, usage of native redis v3.1.3+ extension is recommended",
       "ext-igbinary": "To improve serialization size and speed for cache and sessions, install igbinary extension "
   },
+  "extra": {
+      "branch-alias": {
+          "dev-master": "1.0.x-dev"
+      }
+  },
   "scripts": {
     "fix-cs": "@php ./vendor/bin/php-cs-fixer fix -v --show-progress=estimating",
     "test": "@php ./vendor/bin/phpunit"
