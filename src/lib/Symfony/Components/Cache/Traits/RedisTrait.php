@@ -16,8 +16,6 @@ use Predis\Connection\Aggregate\RedisCluster;
 use Predis\Response\Status;
 use Symfony\Component\Cache\Exception\CacheException;
 use Symfony\Component\Cache\Exception\InvalidArgumentException;
-use Symfony\Component\Cache\Marshaller\DefaultMarshaller;
-use Symfony\Component\Cache\Marshaller\MarshallerInterface;
 
 /**
  * @author Aurimas Niekis <aurimas@niekis.lt>
@@ -42,12 +40,11 @@ trait RedisTrait
         'failover' => 'none',
     ];
     private $redis;
-    private $marshaller;
 
     /**
      * @param \Redis|\RedisArray|\RedisCluster|\Predis\Client $redisClient
      */
-    private function init($redisClient, $namespace, $defaultLifetime, ?MarshallerInterface $marshaller)
+    private function init($redisClient, $namespace, $defaultLifetime)
     {
         parent::__construct($namespace, $defaultLifetime);
 
@@ -58,7 +55,6 @@ trait RedisTrait
             throw new InvalidArgumentException(sprintf('%s() expects parameter 1 to be Redis, RedisArray, RedisCluster or Predis\Client, %s given.', __METHOD__, \is_object($redisClient) ? \get_class($redisClient) : \gettype($redisClient)));
         }
         $this->redis = $redisClient;
-        $this->marshaller = $marshaller ?? new DefaultMarshaller();
     }
 
     /**
@@ -296,7 +292,7 @@ trait RedisTrait
 
         foreach ($values as $id => $v) {
             if ($v) {
-                $result[$id] = $this->marshaller->unmarshall($v);
+                $result[$id] = self::$marshaller->unmarshall($v);
             }
         }
 
@@ -403,7 +399,7 @@ trait RedisTrait
      */
     protected function doSave(array $values, $lifetime)
     {
-        if (!$values = $this->marshaller->marshall($values, $failed)) {
+        if (!$values = self::$marshaller->marshall($values, $failed)) {
             return $failed;
         }
 
