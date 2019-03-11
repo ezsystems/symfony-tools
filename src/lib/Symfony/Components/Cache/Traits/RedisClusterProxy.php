@@ -7,6 +7,10 @@
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
+ *
+ * Original source:
+ * https://github.com/symfony/symfony/blob/master/src/Symfony/Component/Cache/Traits/RedisClusterProxy.php
+ * Last revision: https://github.com/symfony/symfony/commit/239a022cc01cca52c3f6ddde3231199369cf34c2
  */
 
 namespace Symfony\Component\Cache\Traits;

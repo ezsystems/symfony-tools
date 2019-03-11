@@ -7,6 +7,10 @@
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
+ *
+ * Original source:
+ * https://github.com/symfony/symfony/blob/master/src/Symfony/Component/Cache/Traits/RedisTrait.php
+ * Last revision: https://github.com/symfony/symfony/commit/178506e72ce57c030fca3a06043666525c41bff3 (+ merge commit: 87f3c36)
  */
 
 namespace Symfony\Component\Cache\Traits;

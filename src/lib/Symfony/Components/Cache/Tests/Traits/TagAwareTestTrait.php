@@ -7,6 +7,8 @@
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
+ *
+ * Original source: https://github.com/symfony/symfony/pull/30370
  */
 
 namespace Symfony\Component\Cache\Tests\Traits;
