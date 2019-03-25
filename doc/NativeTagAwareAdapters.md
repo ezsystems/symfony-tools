@@ -1,6 +1,7 @@
 # NativeTagAwareAdapters
 
-This feature is an Incubator, and as such might change from minor release to the next.
+This feature is an Incubator, and as such might change from minor release to the next depending on:
+https://github.com/symfony/symfony/pull/30370
 
 Contains a set of optimized TagAwareAdapters that cuts number of cache lookups down by half
 compared to usage of Symfony's TagAwareAdapter. In short, for Filesystem symlinks for tags are used,
