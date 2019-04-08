@@ -23,7 +23,12 @@
   },
   "require": {
     "php": "^7.1",
-    "symfony/symfony": "^3.4.24"
+    "symfony/cache": "^4.2",
+    "symfony/http-foundation": "^4.2",
+    "symfony/config": "^4.2",
+    "symfony/dependency-injection": "^4.2",
+    "symfony/http-kernel": "^4.2",
+    "symfony/filesystem": "^4.2"
   },
   "require-dev": {
     "cache/integration-tests": "dev-master",
