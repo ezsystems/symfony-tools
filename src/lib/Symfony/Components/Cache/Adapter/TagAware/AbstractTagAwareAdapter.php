@@ -69,7 +69,7 @@ abstract class AbstractTagAwareAdapter implements AdapterInterface, LoggerAwareI
                 $item->defaultLifetime = $defaultLifetime;
                 //<diff:AbstractAdapter> extract Value and Tags from the cache value
                 if (!isset($value['value'])) {
-                    // value is not Tagaware, set as miss so cache is regnerated
+                    // Value is not in Tagaware format, set as miss so cache is regenerated
                     $item->isHit = false;
 
                     return $item;
