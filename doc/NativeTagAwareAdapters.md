@@ -23,71 +23,29 @@ See: https://github.com/symfony/symfony/commits/master/src/Symfony/Component/Cac
 ## Configuration
 After installing the bundle, you have to configure proper services in order to use this.
 
-**Here is an example on how to do that with eZ Platform:**
-
+**Below are examples on how to configure these adapters with eZ Platform 2.5.x**
 
 ### File system cache
 
-In `app/config/cache_pool/app.cache.tagaware.filesystem.yml`, place the following:
-```yaml
-services:
-    app.cache.tagaware.filesystem:
-        class: Symfony\Component\Cache\Adapter\TagAware\FilesystemTagAwareAdapter
-        parent: cache.adapter.filesystem
-        tags:
-            - name: cache.pool
-              clearer: cache.app_clearer
-              # Cache namespace prefix overriding the one used by Symfony by default
-              # This makes sure cache is reliably shared across whole cluster and all Symfony env's
-              # Can be used for blue/green deployment strategies when changes affect content cache.
-              # For multi db setup adapt this to be unique per pool (one pool per database)
-              # If you prefer default behaviour set this to null or comment out, and consider for instance:
-              # https://symfony.com/doc/current/reference/configuration/framework.html#prefix-seed
-              namespace: '%cache_namespace%'
-```
+Enabled by default on eZ Platform 2.5+, this is done by means of a new cache adapter service:
+https://github.com/ezsystems/ezplatform/blob/v2.5.1/app/config/cache_pool/cache.tagaware.filesystem.yml
 
-Once that is done you can enable the handler, for instance by setting the following environment variable for PHP:
-```bash
-export CACHE_POOL="app.cache.tagaware.filesystem"
-```
+And by default `CACHE_POOL` enviroment is set to `cache.tagaware.filesystem` to use it.
 
-_Then clear cache and restart web server, you'll be able to verify it's in use on Symfony's web debug toolbar._
-
+_If you change to this adapter; clear cache and restart web server, you'll be able to verify it's in use on Symfony's web debug toolbar._
 
 ### Redis cache
 
-In `app/config/cache_pool/app.cache.tagaware.redis.yml`, place the following:
-```yaml
-services:
-    app.cache.tagaware.redis:
-        class: Symfony\Component\Cache\Adapter\TagAware\RedisTagAwareAdapter
-        parent: cache.adapter.redis
-        tags:
-            - name: cache.pool
-              clearer: cache.app_clearer
-              # Examples from vendor/symfony/symfony/src/Symfony/Component/Cache/Traits/RedisTrait.php:
-              # redis://localhost:6379
-              # redis://secret@example.com:1234/13
-              # redis://secret@/var/run/redis.sock/13?persistent_id=4&class=Redis&timeout=3&retry_interval=3
-              # Example using Predis: redis://%cache_dsn%?class=\Predis\Client
-              provider: 'redis://%cache_dsn%'
-              # Cache namespace prefix overriding the one used by Symfony by default
-              # This makes sure cache is reliably shared across whole cluster and all Symfony env's
-              # Can be used for blue/green deployment strategies when changes affect content cache.
-              # For multi db setup adapt this to be unique per pool (one pool per database)
-              # If you prefer default behaviour set this to null or comment out, and consider for instance:
-              # https://symfony.com/doc/current/reference/configuration/framework.html#prefix-seed
-              namespace: '%cache_namespace%'
-```
+Add a service for redis cache, on eZ Platform 2.5 and higher one is provided by default in [`app/config/cache_pool/cache.redis.ym`](https://github.com/ezsystems/ezplatform/blob/v2.5.1/app/config/cache_pool/cache.redis.ym).
 
 Once that is done you can enable the handler, for instance by setting the following environment variable for PHP:
 ```bash
-export CACHE_POOL="app.cache.tagaware.redis"
+export CACHE_POOL="cache.redis"
 ```
+
 If you don't have redis, for testing you can use:
 - Run: `docker run --name my-redis -p 6379:6379 -d redis`.
 - Stop + Remove: `docker rm -f my-redis`.
 - Debug: `printf "PING\r\n" | nc localhost 6379`, should return `+PONG`.
 
-
-_Then clear cache and restart web server, you'll be able to verify it's in use on Symfony's web debug toolbar._
+_If you change to this adapter; clear cache and restart web server, you'll be able to verify it's in use on Symfony's web debug toolbar._
