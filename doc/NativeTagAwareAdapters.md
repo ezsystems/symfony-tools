@@ -36,7 +36,7 @@ If you change to this adapter, clear cache and restart web server. You can verif
 
 ### Redis cache
 
-Add a service for redis cache. On eZ Platform 2.5 or higher, it is provided by default in [`app/config/cache_pool/cache.redis.ym`](https://github.com/ezsystems/ezplatform/blob/v2.5.1/app/config/cache_pool/cache.redis.ym).
+Add a service for redis cache. On eZ Platform 2.5 or higher, it is provided by default in [`app/config/cache_pool/cache.redis.yml`](https://github.com/ezsystems/ezplatform/blob/v2.5.1/app/config/cache_pool/cache.redis.yml).
 
 Once that is done you can enable the handler, for instance by setting the following environment variable for PHP:
 ```bash
