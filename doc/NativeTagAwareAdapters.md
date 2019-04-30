@@ -32,7 +32,7 @@ https://github.com/ezsystems/ezplatform/blob/v2.5.1/app/config/cache_pool/cache.
 
 And by default `CACHE_POOL` enviroment is set to `cache.tagaware.filesystem` to use it.
 
-_If you change to this adapter; clear cache and restart web server, you'll be able to verify it's in use on Symfony's web debug toolbar._
+If you change to this adapter, clear cache and restart web server. You can verify if the adapter is in use on the Symfony web debug toolbar.
 
 ### Redis cache
 
