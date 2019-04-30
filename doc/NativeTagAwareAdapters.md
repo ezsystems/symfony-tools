@@ -30,13 +30,13 @@ After installing the bundle, you have to configure proper services in order to u
 Enabled by default on eZ Platform 2.5+, this is done by means of a new cache adapter service:
 https://github.com/ezsystems/ezplatform/blob/v2.5.1/app/config/cache_pool/cache.tagaware.filesystem.yml
 
-And by default `CACHE_POOL` enviroment is set to `cache.tagaware.filesystem` to use it.
+By default `CACHE_POOL` enviroment is set to `cache.tagaware.filesystem` to use it.
 
 If you change to this adapter, clear cache and restart web server. You can verify if the adapter is in use on the Symfony web debug toolbar.
 
 ### Redis cache
 
-Add a service for redis cache, on eZ Platform 2.5 and higher one is provided by default in [`app/config/cache_pool/cache.redis.ym`](https://github.com/ezsystems/ezplatform/blob/v2.5.1/app/config/cache_pool/cache.redis.ym).
+Add a service for redis cache. On eZ Platform 2.5 or higher, it is provided by default in [`app/config/cache_pool/cache.redis.ym`](https://github.com/ezsystems/ezplatform/blob/v2.5.1/app/config/cache_pool/cache.redis.ym).
 
 Once that is done you can enable the handler, for instance by setting the following environment variable for PHP:
 ```bash
@@ -48,4 +48,4 @@ If you don't have redis, for testing you can use:
 - Stop + Remove: `docker rm -f my-redis`.
 - Debug: `printf "PING\r\n" | nc localhost 6379`, should return `+PONG`.
 
-_If you change to this adapter; clear cache and restart web server, you'll be able to verify it's in use on Symfony's web debug toolbar._
+If you change to this adapter, clear cache and restart web server. You can verify if the adapter is in use on the Symfony web debug toolbar.
