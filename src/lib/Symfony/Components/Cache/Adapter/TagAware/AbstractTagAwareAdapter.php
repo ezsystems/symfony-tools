@@ -67,9 +67,13 @@ abstract class AbstractTagAwareAdapter implements AdapterInterface, LoggerAwareI
                 $item->key = $key;
                 $item->defaultLifetime = $defaultLifetime;
                 //<diff:AbstractAdapter> extract Value and Tags from the cache value
-                // Mark as miss if value is not in TagAware format
-                $item->isHit = \array_key_exists('value', $value ?? []) ? $isHit : false;
-                $item->value = $value['value'] ?? null;
+                // If structure does not match what we expect return item as is (no value and not a hit)
+                if (!\is_array($value) || !\array_key_exists('value', $value)) {
+                    return $item;
+                }
+                $item->isHit = $isHit;
+                // Extract value and tags from the cache value
+                $item->value = $value['value'];
                 $item->prevTags = $value['tags'] ?? [];
                 //</diff:AbstractAdapter>
 
