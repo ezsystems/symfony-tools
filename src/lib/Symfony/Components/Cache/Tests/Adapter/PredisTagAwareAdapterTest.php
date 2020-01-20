@@ -11,26 +11,25 @@
  * Original source: https://github.com/symfony/symfony/pull/30370
  */
 
-namespace Symfony\Component\Cache\Tests\Adapter\TagAware;
+namespace Symfony\Component\Cache\Tests\Adapter;
 
-use Symfony\Component\Cache\Adapter\TagAware\RedisTagAwareAdapter;
-use Symfony\Component\Cache\Tests\Adapter\RedisAdapterTest;
+use Psr\Cache\CacheItemPoolInterface;
+use Symfony\Component\Cache\Adapter\RedisTagAwareAdapter;
 use Symfony\Component\Cache\Tests\Traits\TagAwareTestTrait;
-use Symfony\Component\Cache\Traits\RedisProxy;
 
-class RedisTagAwareAdapterTest extends RedisAdapterTest
+class PredisTagAwareAdapterTest extends PredisAdapterTest
 {
     use TagAwareTestTrait;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
         $this->skippedTests['testTagItemExpiry'] = 'Testing expiration slows down the test suite';
     }
 
-    public function createCachePool($defaultLifetime = 0)
+    public function createCachePool($defaultLifetime = 0): CacheItemPoolInterface
     {
-        $this->assertInstanceOf(RedisProxy::class, self::$redis);
+        $this->assertInstanceOf(\Predis\Client::class, self::$redis);
         $adapter = new RedisTagAwareAdapter(self::$redis, str_replace('\\', '.', __CLASS__), $defaultLifetime);
 
         return $adapter;
