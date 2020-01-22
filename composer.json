@@ -29,7 +29,7 @@
     "cache/integration-tests": "dev-master",
     "friendsofphp/php-cs-fixer": "v2.14.6",
     "phpdocumentor/reflection-docblock": "^3.0|^4.0",
-    "phpunit/phpunit": "^7.3",
+    "phpunit/phpunit": "^7.5",
     "predis/predis": "^1.1.1",
     "symfony/phpunit-bridge": "~3.4|~4.0"
 
