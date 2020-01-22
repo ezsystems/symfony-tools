@@ -17,7 +17,7 @@ namespace Symfony\Component\Cache\Tests\Adapter;
 use Psr\Cache\CacheItemPoolInterface;
 use Symfony\Component\Cache\Adapter\RedisTagAwareAdapter;
 use Symfony\Component\Cache\Tests\Traits\TagAwareTestTrait;
-\\use Symfony\Component\Cache\Traits\RedisClusterProxy;
+//use Symfony\Component\Cache\Traits\RedisClusterProxy;
 
 class RedisTagAwareClusterAdapterTest extends RedisClusterAdapterTest
 {
