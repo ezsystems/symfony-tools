@@ -23,14 +23,14 @@
   },
   "require": {
     "php": "^7.1",
-    "symfony/symfony": "^3.4.24"
+    "symfony/symfony": "^3.4.36"
   },
   "require-dev": {
     "cache/integration-tests": "dev-master",
-    "friendsofphp/php-cs-fixer": "v2.14.0",
+    "friendsofphp/php-cs-fixer": "v2.14.6",
     "phpdocumentor/reflection-docblock": "^3.0|^4.0",
     "phpunit/phpunit": "^7.3",
-    "predis/predis": "^1.1.0",
+    "predis/predis": "^1.1.1",
     "symfony/phpunit-bridge": "~3.4|~4.0"
 
   },
@@ -43,7 +43,7 @@
   },
   "extra": {
       "branch-alias": {
-          "dev-master": "2.0.x-dev"
+          "dev-master": "1.1.x-dev"
       }
   },
   "scripts": {
