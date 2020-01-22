@@ -44,9 +44,10 @@ install:
   - if [ "$ENABLE_IGBINARY" != "" ] ; then pecl install igbinary ; fi
   - if [ "$ENABLE_LZF" != "" ] ; then printf "no\n" | pecl install lzf ; fi
   - travis_retry composer install --prefer-dist --no-interaction
+  - travis_retry ./phpunit install
 
 script:
-  - composer test
+  - ./phpunit --colors=always
   - if [ "$CHECK_CS" != "" ]; then ./vendor/bin/php-cs-fixer fix -v --dry-run --diff --show-progress=estimating; fi
 
 
