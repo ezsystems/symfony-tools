@@ -27,9 +27,10 @@ changes to the feature when it gets accepted to Symfony.
 
 **Polyfill (backport) features:**
 - [Redis session handler](doc/RedisSessionHandler.md) _(for Symfony3, native in Symfony4)_
+- [NativeTagAwareAdapters](doc/NativeTagAwareAdapters.md) _(for Symfony3, native in Symfony4)_
 
 **Incubator (proposed) features**
-- [NativeTagAwareAdapters](doc/NativeTagAwareAdapters.md)
+- N/A
 
 
 ### Contributing

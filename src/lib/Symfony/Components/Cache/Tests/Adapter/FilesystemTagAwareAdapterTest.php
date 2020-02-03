@@ -11,10 +11,10 @@
  * Original source: https://github.com/symfony/symfony/pull/30370
  */
 
-namespace Symfony\Component\Cache\Tests\Adapter\TagAware;
+namespace Symfony\Component\Cache\Tests\Adapter;
 
-use Symfony\Component\Cache\Adapter\TagAware\FilesystemTagAwareAdapter;
-use Symfony\Component\Cache\Tests\Adapter\FilesystemAdapterTest;
+use Psr\Cache\CacheItemPoolInterface;
+use Symfony\Component\Cache\Adapter\FilesystemTagAwareAdapter;
 use Symfony\Component\Cache\Tests\Traits\TagAwareTestTrait;
 
 /**
@@ -24,7 +24,7 @@ class FilesystemTagAwareAdapterTest extends FilesystemAdapterTest
 {
     use TagAwareTestTrait;
 
-    public function createCachePool($defaultLifetime = 0)
+    public function createCachePool($defaultLifetime = 0): CacheItemPoolInterface
     {
         return new FilesystemTagAwareAdapter('', $defaultLifetime);
     }

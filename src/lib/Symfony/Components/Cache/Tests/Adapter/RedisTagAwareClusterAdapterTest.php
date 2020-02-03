@@ -9,29 +9,29 @@
  * file that was distributed with this source code.
  *
  * Original source: https://github.com/symfony/symfony/pull/30370
+ *                  Adapted for Symfony 3.4LTS
  */
 
-namespace Symfony\Component\Cache\Tests\Adapter\TagAware;
+namespace Symfony\Component\Cache\Tests\Adapter;
 
-use Predis\Connection\StreamConnection;
-use Symfony\Component\Cache\Adapter\TagAware\RedisTagAwareAdapter;
-use Symfony\Component\Cache\Adapter\RedisAdapter;
-use Symfony\Component\Cache\Tests\Adapter\PredisAdapterTest;
+use Psr\Cache\CacheItemPoolInterface;
+use Symfony\Component\Cache\Adapter\RedisTagAwareAdapter;
 use Symfony\Component\Cache\Tests\Traits\TagAwareTestTrait;
+//use Symfony\Component\Cache\Traits\RedisClusterProxy;
 
-class PredisTagAwareAdapterTest extends PredisAdapterTest
+class RedisTagAwareClusterAdapterTest extends RedisClusterAdapterTest
 {
     use TagAwareTestTrait;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
         $this->skippedTests['testTagItemExpiry'] = 'Testing expiration slows down the test suite';
     }
 
-    public function createCachePool($defaultLifetime = 0)
+    public function createCachePool($defaultLifetime = 0): CacheItemPoolInterface
     {
-        $this->assertInstanceOf(\Predis\Client::class, self::$redis);
+        $this->assertInstanceOf(\RedisCluster::class, self::$redis);
         $adapter = new RedisTagAwareAdapter(self::$redis, str_replace('\\', '.', __CLASS__), $defaultLifetime);
 
         return $adapter;

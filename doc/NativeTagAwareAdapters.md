@@ -15,10 +15,10 @@ See: https://github.com/symfony/symfony/commits/master/src/Symfony/Component/Cac
 
 ## Requirements
 - Symfony 3.4, PHP 7.1+
-- For usage eZ Platform v2: `ezsystems/ezpublish-kernel` v7.3.5, v7.4.3 or higher.
+- For usage eZ Platform v2: `ezsystems/ezpublish-kernel` v7.5 or higher.
 - For `RedisTagAwareAdapter` usage:
-    - [PHP Redis](https://pecl.php.net/package/redis) extension v3.1.3 or higher, _or_ [Predis](https://packagist.org/packages/predis/predis)
-    - Redis 3.2 or higher, configured with `noeviction` or any `volatile-*` eviction policy
+    - [PHP Redis](https://pecl.php.net/package/redis) extension v3.x or higher, _or_ [Predis](https://packagist.org/packages/predis/predis)
+    - Redis 2.8 or higher, configured with `noeviction` or any `volatile-*` eviction policy
 
 ## Configuration
 After installing the bundle, you have to configure proper services in order to use this.
@@ -28,9 +28,9 @@ After installing the bundle, you have to configure proper services in order to u
 ### File system cache
 
 Enabled by default on eZ Platform 2.5+, this is done by means of a new cache adapter service:
-https://github.com/ezsystems/ezplatform/blob/v2.5.1/app/config/cache_pool/cache.tagaware.filesystem.yml
+https://github.com/ezsystems/ezplatform/blob/v2.5.8/app/config/cache_pool/cache.tagaware.filesystem.yml
 
-By default `CACHE_POOL` enviroment is set to `cache.tagaware.filesystem` to use it.
+By default `CACHE_POOL` environment is set to `cache.tagaware.filesystem` to use it.
 
 If you change to this adapter, clear cache and restart web server. You can verify if the adapter is in use on the Symfony web debug toolbar.
 
@@ -47,5 +47,6 @@ If you don't have redis, for testing you can use:
 - Run: `docker run --name my-redis -p 6379:6379 -d redis`.
 - Stop + Remove: `docker rm -f my-redis`.
 - Debug: `printf "PING\r\n" | nc localhost 6379`, should return `+PONG`.
+    - `docker exec -ti my-redis redis-cli INFO`  _(see [redis.io/commands](https://redis.io/commands) for more)_
 
 If you change to this adapter, clear cache and restart web server. You can verify if the adapter is in use on the Symfony web debug toolbar.
