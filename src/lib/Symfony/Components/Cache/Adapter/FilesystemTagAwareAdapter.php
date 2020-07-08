@@ -10,6 +10,7 @@
  *
  * Original source: https://github.com/symfony/symfony/pull/30370
  *                  Adapted for Symfony 3.4LTS
+ *                  Last updated from checksum: ddf795390a
  */
 
 namespace Symfony\Component\Cache\Adapter;
@@ -100,7 +101,7 @@ class FilesystemTagAwareAdapter extends AbstractTagAwareAdapter implements Prune
      *
      * {@inheritdoc}
      */
-    protected function doSave(array $values, ?int $lifetime, array $addTagData = [], array $removeTagData = []): array
+    protected function doSave(array $values, int $lifetime, array $addTagData = [], array $removeTagData = []): array
     {
         $failed = [];
         $serialized = self::$marshaller->marshall($values, $failed);
@@ -131,7 +132,7 @@ class FilesystemTagAwareAdapter extends AbstractTagAwareAdapter implements Prune
 
                 $file = $this->getFile($id);
 
-                if (!@symlink($file, $this->getFile($id, true, $tagFolder))) {
+                if (!@symlink($file, $tagLink = $this->getFile($id, true, $tagFolder)) && !is_link($tagLink)) {
                     @unlink($file);
                     $failed[] = $id;
                 }

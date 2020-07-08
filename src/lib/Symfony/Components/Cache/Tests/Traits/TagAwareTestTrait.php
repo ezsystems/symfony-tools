@@ -10,6 +10,7 @@
  *
  * Original source: https://github.com/symfony/symfony/pull/30370
  *                  Adapted for Symfony 3.4LTS
+ *                  Last updated from checksum: ddf795390a
  */
 
 namespace Symfony\Component\Cache\Tests\Traits;
@@ -141,5 +142,43 @@ trait TagAwareTestTrait
 
         $i = $pool->getItem('k');
         $this->assertSame(['foo' => 'foo'], $i->getPreviousTags());
+    }
+
+    public function testRefreshAfterExpires()
+    {
+        $pool = $this->createCachePool();
+        $pool->clear();
+
+        $cacheItem = $pool->getItem('test');
+
+        $this->assertFalse($cacheItem->isHit());
+
+        // write cache with expires
+        $cacheItem->set('test');
+        $cacheItem->tag('1234');
+        $cacheItem->expiresAfter(1);
+
+        $pool->save($cacheItem);
+
+        $cacheItem = $pool->getItem('test');
+        $this->assertTrue($cacheItem->isHit());
+
+        // wait until expired
+        sleep(2);
+
+        // item should not longer be a hit
+        $cacheItem = $pool->getItem('test');
+        $this->assertFalse($cacheItem->isHit());
+
+        // update expired item
+        $cacheItem->set('test');
+        $cacheItem->tag('1234');
+        $cacheItem->expiresAfter(1);
+
+        $pool->save($cacheItem);
+
+        // item should be again a hit
+        $cacheItem = $pool->getItem('test');
+        $this->assertTrue($cacheItem->isHit());
     }
 }

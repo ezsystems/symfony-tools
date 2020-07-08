@@ -10,6 +10,7 @@
  *
  * Original source: https://github.com/symfony/symfony/pull/30370
  *                  Adapted for Symfony 3.4LTS
+ *                  Last updated from checksum: ddf795390a
  */
 
 namespace Symfony\Component\Cache\Adapter;
@@ -70,7 +71,7 @@ abstract class AbstractTagAwareAdapter implements TagAwareAdapterInterface, Logg
 
         $this->namespace = '' === $namespace ? '' : CacheItem::validateKey($namespace).':';
         if (null !== $this->maxIdLength && \strlen($namespace) > $this->maxIdLength - 24) {
-            throw new InvalidArgumentException(sprintf('Namespace must be %d chars max, %d given ("%s")', $this->maxIdLength - 24, \strlen($namespace), $namespace));
+            throw new InvalidArgumentException(sprintf('Namespace must be %d chars max, %d given ("%s").', $this->maxIdLength - 24, \strlen($namespace), $namespace));
         }
         $this->createCacheItem = \Closure::bind(
             static function ($key, $value, $isHit) use ($defaultLifetime) {
@@ -144,7 +145,7 @@ abstract class AbstractTagAwareAdapter implements TagAwareAdapterInterface, Logg
      *
      * @return array The identifiers that failed to be cached or a boolean stating if caching succeeded or not
      */
-    abstract protected function doSave(array $values, ?int $lifetime, array $addTagData = [], array $removeTagData = []): array;
+    abstract protected function doSave(array $values, int $lifetime, array $addTagData = [], array $removeTagData = []): array;
 
     /**
      * Removes multiple items from the pool and their corresponding tags.
