@@ -8,9 +8,8 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  *
- * Original source:
- * https://github.com/symfony/symfony/blob/master/src/Symfony/Component/Cache/Marshaller/DefaultMarshaller.php
- * Last revision: https://github.com/symfony/symfony/commit/3cfdc9e9d739dda0bc8d222d458e6bbb34c10c72 (+ CS commit: d2098d7)
+ * Original source (with exact checksum) from 4.4 branch:
+ * https://github.com/symfony/symfony/blob/ddf795390a/src/Symfony/Component/Cache/Marshaller/DefaultMarshaller.php
  */
 
 namespace Symfony\Component\Cache\Marshaller;
@@ -29,9 +28,9 @@ class DefaultMarshaller implements MarshallerInterface
     public function __construct(bool $useIgbinarySerialize = null)
     {
         if (null === $useIgbinarySerialize) {
-            $useIgbinarySerialize = \extension_loaded('igbinary');
-        } elseif ($useIgbinarySerialize && !\extension_loaded('igbinary')) {
-            throw new CacheException('The "igbinary" PHP extension is not loaded.');
+            $useIgbinarySerialize = \extension_loaded('igbinary') && (\PHP_VERSION_ID < 70400 || version_compare('3.1.0', phpversion('igbinary'), '<='));
+        } elseif ($useIgbinarySerialize && (!\extension_loaded('igbinary') || (\PHP_VERSION_ID >= 70400 && version_compare('3.1.0', phpversion('igbinary'), '>')))) {
+            throw new CacheException(\extension_loaded('igbinary') && \PHP_VERSION_ID >= 70400 ? 'Please upgrade the "igbinary" PHP extension to v3.1 or higher.' : 'The "igbinary" PHP extension is not loaded.');
         }
         $this->useIgbinarySerialize = $useIgbinarySerialize;
     }
@@ -70,7 +69,7 @@ class DefaultMarshaller implements MarshallerInterface
             return null;
         }
         static $igbinaryNull;
-        if ($value === ($igbinaryNull ?? $igbinaryNull = \extension_loaded('igbinary') ? igbinary_serialize(null) : false)) {
+        if ($value === ($igbinaryNull ?? $igbinaryNull = \extension_loaded('igbinary') && (\PHP_VERSION_ID < 70400 || version_compare('3.1.0', phpversion('igbinary'), '<=')) ? igbinary_serialize(null) : false)) {
             return null;
         }
         $unserializeCallbackHandler = ini_set('unserialize_callback_func', __CLASS__.'::handleUnserializeCallback');
