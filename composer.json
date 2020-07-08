@@ -23,7 +23,7 @@
   },
   "require": {
     "php": "^7.1",
-    "symfony/symfony": "^3.4.36"
+    "symfony/symfony": "^3.4.40"
   },
   "require-dev": {
     "cache/integration-tests": "dev-master",
