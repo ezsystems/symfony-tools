@@ -15,10 +15,10 @@ declare(strict_types=1);
 
 namespace Symfony\Component\Cache\Adapter\TagAware;
 
-use Predis;
 use Predis\Connection\Aggregate\ClusterInterface;
 use Predis\Response\Status;
 use Symfony\Component\Cache\Adapter\TagAwareAdapterInterface;
+use Symfony\Component\Cache\Exception\LogicException;
 use Symfony\Component\Cache\Traits\RedisTrait;
 
 /**
@@ -53,6 +53,11 @@ final class RedisTagAwareAdapter extends AbstractTagAwareAdapter implements TagA
     private const FORCED_ITEM_TTL = 864000;
 
     /**
+     * @var string|null detected eviction policy used on Redis server
+     */
+    private $redisEvictionPolicy;
+
+    /**
      * @param \Redis|\RedisArray|\RedisCluster|\Predis\Client $redisClient     The redis client
      * @param string                                          $namespace       The default namespace
      * @param int                                             $defaultLifetime The default lifetime
@@ -64,8 +69,8 @@ final class RedisTagAwareAdapter extends AbstractTagAwareAdapter implements TagA
         $this->init($redisClient, $namespace, $defaultLifetime);
 
         // Make sure php-redis is 3.1.3 or higher configured for Redis classes
-        if (!$this->redis instanceof Predis\Client && version_compare(phpversion('redis'), '3.1.3', '<')) {
-            throw new \Exception('RedisTagAwareAdapter requries php-redis 3.1.3 or higher, alternatively use predis/predis');
+        if (!$this->redis instanceof \Predis\ClientInterface && version_compare(phpversion('redis'), '3.1.3', '<')) {
+            throw new \Exception('RedisTagAwareAdapter requries php-redis 3.1.3 or higher, alternatively use predis/predis, or upgrade ezsystems/symfony-tools to v1.1.x');
         }
     }
 
@@ -80,6 +85,11 @@ final class RedisTagAwareAdapter extends AbstractTagAwareAdapter implements TagA
      */
     protected function doSave(array $values, $lifetime)
     {
+        $eviction = $this->getRedisEvictionPolicy();
+        if ('noeviction' !== $eviction && 0 !== strpos($eviction, 'volatile-')) {
+            throw new LogicException(sprintf('Redis maxmemory-policy setting "%s" is *not* supported by RedisTagAwareAdapter, use "noeviction" or  "volatile-*" eviction policies.', $eviction));
+        }
+
         // Extract tag operations
         $tagOperations = ['sAdd' => [], 'sRem' => []];
         foreach ($values as $id => $value) {
@@ -182,5 +192,51 @@ final class RedisTagAwareAdapter extends AbstractTagAwareAdapter implements TagA
         }
 
         return true;
+    }
+
+    private function getRedisEvictionPolicy(): string
+    {
+        if (null !== $this->redisEvictionPolicy) {
+            return $this->redisEvictionPolicy;
+        }
+
+        foreach ($this->getHosts() as $host) {
+            $info = $host->info('Memory');
+            $info = isset($info['Memory']) ? $info['Memory'] : $info;
+
+            return $this->redisEvictionPolicy = $info['maxmemory_policy'];
+        }
+
+        return $this->redisEvictionPolicy = '';
+    }
+
+    /**
+     * Backport from RedisTrait in 4.4.
+     */
+    private function getHosts(): array
+    {
+        $hosts = [$this->redis];
+        if ($this->redis instanceof \Predis\ClientInterface) {
+            $connection = $this->redis->getConnection();
+            if ($connection instanceof ClusterInterface && $connection instanceof \Traversable) {
+                $hosts = [];
+                foreach ($connection as $c) {
+                    $hosts[] = new \Predis\Client($c);
+                }
+            }
+        } elseif ($this->redis instanceof \RedisArray) {
+            $hosts = [];
+            foreach ($this->redis->_hosts() as $host) {
+                $hosts[] = $this->redis->_instance($host);
+            }
+        } elseif ($this->redis instanceof \RedisCluster) {
+            $hosts = [];
+            foreach ($this->redis->_masters() as $host) {
+                $hosts[] = $h = new \Redis();
+                $h->connect($host[0], $host[1]);
+            }
+        }
+
+        return $hosts;
     }
 }
