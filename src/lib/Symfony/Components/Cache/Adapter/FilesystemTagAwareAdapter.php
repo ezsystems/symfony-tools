@@ -101,7 +101,7 @@ class FilesystemTagAwareAdapter extends AbstractTagAwareAdapter implements Prune
      *
      * {@inheritdoc}
      */
-    protected function doSave(array $values, int $lifetime, array $addTagData = [], array $removeTagData = []): array
+    protected function doSave(array $values, $lifetime, array $addTagData = [], array $removeTagData = []): array
     {
         $failed = [];
         $serialized = self::$marshaller->marshall($values, $failed);
