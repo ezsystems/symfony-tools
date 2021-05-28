@@ -27,12 +27,12 @@
   },
   "require-dev": {
     "cache/integration-tests": "dev-master",
-    "friendsofphp/php-cs-fixer": "v2.14.6",
+    "friendsofphp/php-cs-fixer": "^2.14.6",
     "phpdocumentor/reflection-docblock": "^3.0|^4.0",
     "phpunit/phpunit": "^7.5",
     "predis/predis": "^1.1.1",
-    "symfony/phpunit-bridge": "~3.4|~4.0"
-
+    "symfony/phpunit-bridge": "~3.4|~4.0",
+    "phpstan/phpstan": "^0.12.88"
   },
   "conflict": {
       "ezsystems/ezpublish-kernel": "7.0 - 7.3.4 | 7.4.0 - 7.4.2"
@@ -47,7 +47,15 @@
       }
   },
   "scripts": {
-    "fix-cs": "@php ./vendor/bin/php-cs-fixer fix -v --show-progress=estimating",
-    "test": "@php ./vendor/bin/simple-phpunit"
+    "fix-cs": "php-cs-fixer fix -v --show-progress=estimating",
+    "check-cs": "php-cs-fixer fix --dry-run -v --diff --show-progress=estimating",
+    "test": "simple-phpunit",
+    "phpstan": "phpstan analyse -c phpstan.neon"
+  },
+  "scripts-descriptions": {
+    "fix-cs": "Automatically fixes code style in all files",
+    "check-cs": "Run code style checker for all files",
+    "test": "Run automatic tests",
+    "phpstan": "Run static code analysis"
   }
 }

@@ -1,0 +1,22 @@
+parameters:
+	ignoreErrors:
+		-
+			message: "#^Undefined variable\\: \\$expiredIds$#"
+			count: 2
+			path: src/lib/Symfony/Components/Cache/Adapter/AbstractTagAwareAdapter.php
+
+		-
+			message: "#^Instantiated class Symfony\\\\Component\\\\Cache\\\\Adapter\\\\CacheException not found\\.$#"
+			count: 1
+			path: src/lib/Symfony/Components/Cache/Adapter/FilesystemTagAwareAdapter.php
+
+		-
+			message: "#^Access to an undefined property Predis\\\\Configuration\\\\OptionsInterface\\:\\:\\$options\\.$#"
+			count: 1
+			path: src/lib/Symfony/Components/Cache/Adapter/RedisTagAwareAdapter.php
+
+		-
+			message: "#^Class Symfony\\\\Component\\\\Cache\\\\Traits\\\\RedisClusterProxy not found\\.$#"
+			count: 1
+			path: src/lib/Symfony/Components/HttpFoundation/Session/Storage/Handler/RedisSessionHandler.php
+
