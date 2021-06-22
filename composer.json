@@ -49,7 +49,7 @@
   "scripts": {
     "fix-cs": "php-cs-fixer fix -v --show-progress=estimating",
     "check-cs": "php-cs-fixer fix --dry-run -v --diff --show-progress=estimating",
-    "test": "simple-phpunit",
+    "test": "phpunit -c phpunix.xml.dist",
     "phpstan": "phpstan analyse -c phpstan.neon"
   },
   "scripts-descriptions": {
