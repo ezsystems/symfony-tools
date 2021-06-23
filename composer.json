@@ -28,7 +28,7 @@
   "require-dev": {
     "cache/integration-tests": "dev-master",
     "friendsofphp/php-cs-fixer": "^2.14.6",
-    "phpdocumentor/reflection-docblock": "^3.0|^4.0",
+    "phpdocumentor/reflection-docblock": "^3.0|^4.0|^5.0",
     "phpunit/phpunit": "^7.5",
     "predis/predis": "^1.1.1",
     "symfony/phpunit-bridge": "~3.4|~4.0",
@@ -49,7 +49,7 @@
   "scripts": {
     "fix-cs": "php-cs-fixer fix -v --show-progress=estimating",
     "check-cs": "php-cs-fixer fix --dry-run -v --diff --show-progress=estimating",
-    "test": "simple-phpunit",
+    "test": "phpunit -c phpunit.xml.dist",
     "phpstan": "phpstan analyse -c phpstan.neon"
   },
   "scripts-descriptions": {
