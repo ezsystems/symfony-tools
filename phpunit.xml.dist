@@ -12,7 +12,6 @@
         <ini name="error_reporting" value="-1" />
         <env name="REDIS_HOST" value="localhost" />
         <env name="MEMCACHED_HOST" value="localhost" />
-        <env name="SYMFONY_PHPUNIT_REMOVE_RETURN_TYPEHINT" value="1" />
     </php>
 
     <testsuites>
