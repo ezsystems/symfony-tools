@@ -52,8 +52,6 @@ install:
 
 script:
   - composer test
-  - if [ "$CHECK_CS" != "" ]; then ./vendor/bin/php-cs-fixer fix -v --dry-run --diff --show-progress=estimating; fi
-
 
 notifications:
   email: false
